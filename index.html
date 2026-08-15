@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laboratório de Conteúdo com IA — Andressa Marketing & Estratégia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root{
+    --ink:#16241F;
+    --petrol:#1B3A3A;
+    --petrol-deep:#122828;
+    --paper:#E9EBE2;
+    --paper-card:#F5F6F0;
+    --coral:#FF5A36;
+    --coral-deep:#E24322;
+    --lime:#C7D82E;
+    --line: rgba(22,36,31,0.14);
+    --line-strong: rgba(22,36,31,0.28);
+    --shadow: 0 18px 40px -18px rgba(18,40,40,0.45);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{
+    font-family:'Fraunces', serif;
+    margin:0;
+    line-height:1.05;
+    font-weight:600;
+  }
+  .mono{
+    font-family:'IBM Plex Mono', monospace;
+    letter-spacing:0.04em;
+  }
+  a{color:inherit;}
+  img{max-width:100%;display:block;}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 28px;}
+  @media (max-width:640px){.wrap{padding:0 20px;}}
+
+  /* NAV */
+  nav{
+    position:sticky;top:0;z-index:50;
+    background:rgba(233,235,226,0.9);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-inner{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 28px;max-width:1120px;margin:0 auto;
+  }
+  .logo{display:flex;align-items:center;gap:10px;font-family:'Fraunces',serif;font-weight:600;font-size:1.05rem;}
+  .logo-mark{
+    width:30px;height:30px;border-radius:7px;background:var(--petrol);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--lime);font-family:'IBM Plex Mono',monospace;font-size:0.7rem;font-weight:600;
+  }
+  .nav-links{display:flex;gap:28px;align-items:center;font-size:0.92rem;}
+  .nav-links a{text-decoration:none;opacity:0.75;transition:opacity .15s;}
+  .nav-links a:hover{opacity:1;}
+  .btn-nav{
+    background:var(--ink);color:var(--paper);padding:9px 18px;border-radius:100px;
+    font-size:0.86rem;font-weight:500;text-decoration:none;
+  }
+  @media (max-width:760px){.nav-links a:not(.btn-nav){display:none;}}
+
+  /* HERO */
+  .hero{
+    background:radial-gradient(120% 140% at 15% 0%, #1F4747 0%, var(--petrol) 45%, var(--petrol-deep) 100%);
+    color:var(--paper);
+    padding:76px 0 96px;
+    position:relative;
+    overflow:hidden;
+  }
+  .hero::before{
+    content:"";position:absolute;inset:0;
+    background-image:
+      linear-gradient(rgba(233,235,226,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(233,235,226,0.05) 1px, transparent 1px);
+    background-size:36px 36px;
+    mask-image:radial-gradient(70% 70% at 30% 20%, black, transparent);
+    pointer-events:none;
+  }
+  .hero-inner{position:relative;display:grid;grid-template-columns:1fr;gap:44px;}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-family:'IBM Plex Mono',monospace;font-size:0.74rem;letter-spacing:0.12em;
+    text-transform:uppercase;color:var(--lime);margin-bottom:20px;
+  }
+  .eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--lime);box-shadow:0 0 0 4px rgba(199,216,46,0.18);}
+  .hero h1{font-size:clamp(2.1rem, 4.4vw, 3.4rem);max-width:15ch;}
+  .hero h1 em{font-style:italic;color:var(--lime);}
+  .hero p.sub{
+    margin-top:20px;font-size:1.08rem;max-width:46ch;color:rgba(233,235,226,0.82);
+  }
+  .hero-cta-row{display:flex;gap:14px;margin-top:30px;flex-wrap:wrap;}
+  .btn-primary{
+    background:var(--coral);color:#fff;padding:14px 26px;border-radius:100px;
+    font-weight:600;font-size:0.95rem;text-decoration:none;border:none;cursor:pointer;
+    transition:transform .15s, background .15s;box-shadow:0 10px 26px -10px rgba(255,90,54,0.65);
+  }
+  .btn-primary:hover{background:var(--coral-deep);transform:translateY(-1px);}
+  .btn-ghost{
+    background:transparent;color:var(--paper);padding:14px 22px;border-radius:100px;
+    border:1px solid rgba(233,235,226,0.35);font-weight:500;font-size:0.95rem;text-decoration:none;
+  }
+
+  /* GENERATOR CARD */
+  .lab-card{
+    background:var(--paper-card);
+    border-radius:20px;
+    box-shadow:var(--shadow);
+    padding:28px;
+    color:var(--ink);
+    position:relative;
+    border:1px solid rgba(255,255,255,0.5);
+  }
+  .lab-card-tab{
+    position:absolute;top:-14px;left:26px;
+    background:var(--ink);color:var(--paper);
+    font-family:'IBM Plex Mono',monospace;font-size:0.68rem;letter-spacing:0.08em;
+    padding:5px 12px;border-radius:6px;text-transform:uppercase;
+  }
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+  @media (max-width:560px){.field-row{grid-template-columns:1fr;}}
+  label{
+    display:block;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.07em;
+    font-family:'IBM Plex Mono',monospace;color:rgba(22,36,31,0.6);margin-bottom:6px;
+  }
+  input[type=text], select, textarea{
+    width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid var(--line-strong);
+    background:#fff;font-family:'IBM Plex Sans',sans-serif;font-size:0.94rem;color:var(--ink);
+  }
+  input[type=text]:focus, select:focus, textarea:focus{
+    outline:2px solid var(--petrol);outline-offset:1px;
+  }
+  .chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  .chip{
+    padding:9px 15px;border-radius:100px;border:1.5px solid var(--line-strong);
+    background:#fff;font-size:0.86rem;cursor:pointer;font-weight:500;transition:all .15s;
+  }
+  .chip.active{background:var(--petrol);border-color:var(--petrol);color:var(--paper);}
+  .gen-btn{
+    width:100%;padding:15px;border-radius:12px;background:var(--coral);color:#fff;
+    border:none;font-weight:600;font-size:0.98rem;cursor:pointer;margin-top:6px;
+    transition:background .15s;display:flex;align-items:center;justify-content:center;gap:10px;
+  }
+  .gen-btn:hover{background:var(--coral-deep);}
+  .gen-btn:disabled{background:#a9a49a;cursor:wait;}
+  input[type=file]{
+    width:100%;padding:10px 12px;border-radius:10px;border:1.5px dashed var(--line-strong);
+    background:#fff;font-family:'IBM Plex Sans',sans-serif;font-size:0.86rem;color:rgba(22,36,31,0.7);
+  }
+  input[type=file]::file-selector-button{
+    padding:7px 14px;border-radius:100px;border:none;background:var(--ink);color:var(--paper);
+    font-size:0.8rem;font-weight:500;margin-right:12px;cursor:pointer;
+  }
+  .spinner{
+    width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,0.4);
+    border-top-color:#fff;animation:spin .7s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .error-box{
+    margin-top:14px;padding:12px 14px;background:#FCEBE6;border:1px solid var(--coral);
+    border-radius:10px;font-size:0.86rem;color:var(--coral-deep);
+  }
+
+  .result-wrap{margin-top:22px;display:none;}
+  .result-wrap.show{display:block;}
+  .specimen{
+    position:relative;background:#fff;border:1.5px solid var(--line-strong);
+    border-radius:12px;padding:18px 18px 16px 60px;margin-bottom:12px;
+  }
+  .specimen-num{
+    position:absolute;left:0;top:0;bottom:0;width:44px;
+    background:var(--petrol);color:var(--lime);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:1rem;
+    border-radius:11px 0 0 11px;
+  }
+  .specimen-label{
+    font-family:'IBM Plex Mono',monospace;font-size:0.68rem;letter-spacing:0.08em;
+    text-transform:uppercase;color:var(--coral-deep);margin-bottom:6px;font-weight:600;
+  }
+  .specimen-text{font-size:0.96rem;color:var(--ink);white-space:pre-wrap;}
+  .result-actions{display:flex;gap:10px;margin-top:6px;}
+  .plano-item{display:flex;gap:14px;padding:14px 0;border-top:1px solid var(--line);}
+  .plano-item:first-child{border-top:none;padding-top:6px;}
+  .plano-num{
+    width:32px;height:32px;border-radius:50%;background:var(--petrol);color:var(--lime);
+    display:flex;align-items:center;justify-content:center;font-size:0.9rem;font-weight:600;flex-shrink:0;
+  }
+  .plano-badge{
+    display:inline-block;padding:3px 10px;border-radius:100px;font-size:0.66rem;
+    text-transform:uppercase;margin-bottom:7px;font-weight:600;
+  }
+  .plano-badge.video{background:#FCEBE6;color:var(--coral-deep);}
+  .plano-badge.texto{background:#E4E9E2;color:var(--petrol);}
+  .plano-instrucao{font-size:0.92rem;margin-bottom:4px;color:var(--ink);}
+  .plano-dica{font-size:0.8rem;color:rgba(22,36,31,0.55);font-style:italic;}
+  .btn-small{
+    padding:9px 16px;border-radius:100px;border:1.5px solid var(--line-strong);
+    background:#fff;font-size:0.83rem;font-weight:500;cursor:pointer;
+  }
+  .btn-small.primary{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .btn-small:hover{border-color:var(--ink);}
+
+  /* SECTIONS */
+  section{padding:88px 0;}
+  .section-head{max-width:640px;margin-bottom:48px;}
+  .section-eyebrow{
+    font-family:'IBM Plex Mono',monospace;font-size:0.72rem;letter-spacing:0.1em;
+    text-transform:uppercase;color:var(--coral-deep);margin-bottom:12px;display:block;font-weight:600;
+  }
+  .section-head h2{font-size:clamp(1.6rem,3vw,2.3rem);}
+  .section-head p{margin-top:14px;color:rgba(22,36,31,0.68);font-size:1.02rem;max-width:52ch;}
+
+  /* VALUE GRID */
+  .value-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line-strong);border:1px solid var(--line-strong);border-radius:16px;overflow:hidden;}
+  @media (max-width:900px){.value-grid{grid-template-columns:repeat(2,1fr);}}
+  @media (max-width:560px){.value-grid{grid-template-columns:1fr;}}
+  .value-item{background:var(--paper-card);padding:28px 22px;}
+  .value-item .num{font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:var(--coral-deep);font-weight:600;margin-bottom:14px;}
+  .value-item h3{font-size:1.06rem;font-weight:600;margin-bottom:8px;font-family:'IBM Plex Sans',sans-serif;}
+  .value-item p{font-size:0.9rem;color:rgba(22,36,31,0.68);margin:0;}
+
+  /* HOW IT WORKS */
+  .steps{display:flex;flex-direction:column;gap:0;}
+  .step{display:grid;grid-template-columns:64px 1fr;gap:22px;padding:26px 0;border-top:1px solid var(--line);}
+  .step:last-child{border-bottom:1px solid var(--line);}
+  .step-num{font-family:'Fraunces',serif;font-size:2rem;color:var(--coral);font-weight:600;}
+  .step h3{font-size:1.12rem;margin-bottom:6px;font-family:'IBM Plex Sans',sans-serif;font-weight:600;}
+  .step p{color:rgba(22,36,31,0.68);margin:0;max-width:60ch;}
+
+  /* PRICING */
+  .pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  @media (max-width:860px){.pricing-grid{grid-template-columns:1fr;}}
+  .price-card{
+    background:var(--paper-card);border:1.5px solid var(--line-strong);border-radius:16px;padding:30px 26px;
+    display:flex;flex-direction:column;
+  }
+  .price-card.featured{background:var(--petrol);color:var(--paper);border-color:var(--petrol);position:relative;}
+  .price-card.featured .price-tag{color:var(--lime);}
+  .price-card.featured .feat-line{color:rgba(233,235,226,0.75);}
+  .featured-badge{
+    position:absolute;top:-13px;right:24px;background:var(--coral);color:#fff;
+    font-family:'IBM Plex Mono',monospace;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.07em;
+    padding:5px 12px;border-radius:100px;font-weight:600;
+  }
+  .plan-name{font-family:'IBM Plex Mono',monospace;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px;opacity:0.7;}
+  .price-tag{font-family:'Fraunces',serif;font-size:2.1rem;font-weight:600;color:var(--ink);}
+  .price-tag span{font-family:'IBM Plex Sans',sans-serif;font-size:0.9rem;font-weight:400;opacity:0.65;}
+  .feat-list{list-style:none;padding:0;margin:22px 0;flex:1;}
+  .feat-list li{
+    padding:9px 0;border-top:1px solid var(--line);font-size:0.88rem;
+    display:flex;gap:9px;align-items:flex-start;
+  }
+  .price-card.featured .feat-list li{border-top:1px solid rgba(233,235,226,0.18);}
+  .feat-list li::before{content:"→";color:var(--coral-deep);font-weight:600;flex-shrink:0;}
+  .price-card.featured .feat-list li::before{color:var(--lime);}
+  .btn-plan{
+    text-align:center;padding:12px;border-radius:10px;background:var(--ink);color:var(--paper);
+    font-weight:600;font-size:0.9rem;text-decoration:none;border:none;cursor:pointer;
+  }
+  .price-card.featured .btn-plan{background:var(--coral);}
+
+  /* LIBRARY */
+  .library-empty{
+    border:1.5px dashed var(--line-strong);border-radius:14px;padding:40px 24px;text-align:center;
+    color:rgba(22,36,31,0.55);font-size:0.92rem;
+  }
+  .lib-item{
+    background:var(--paper-card);border:1px solid var(--line-strong);border-radius:12px;
+    padding:16px 18px;margin-bottom:12px;
+  }
+  .lib-item-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .lib-tag{
+    font-family:'IBM Plex Mono',monospace;font-size:0.68rem;text-transform:uppercase;
+    background:var(--petrol);color:var(--lime);padding:3px 10px;border-radius:100px;
+  }
+  .lib-theme{font-weight:600;font-size:0.95rem;}
+  .lib-preview{font-size:0.86rem;color:rgba(22,36,31,0.68);}
+
+  /* FAQ */
+  .faq-item{border-top:1px solid var(--line);padding:20px 0;}
+  .faq-item:last-child{border-bottom:1px solid var(--line);}
+  .faq-item summary{
+    cursor:pointer;font-weight:600;font-size:1rem;list-style:none;display:flex;justify-content:space-between;align-items:center;
+  }
+  .faq-item summary::-webkit-details-marker{display:none;}
+  .faq-item summary::after{content:"+";font-size:1.3rem;color:var(--coral-deep);font-weight:400;}
+  .faq-item[open] summary::after{content:"–";}
+  .faq-item p{margin-top:12px;color:rgba(22,36,31,0.68);font-size:0.93rem;}
+
+  footer{background:var(--petrol-deep);color:rgba(233,235,226,0.6);padding:40px 0;font-size:0.85rem;}
+  footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+  footer strong{color:var(--paper);}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="logo"><span class="logo-mark">AL</span> Laboratório de Conteúdo</div>
+    <div class="nav-links">
+      <a href="#perfil-marca">Perfil da marca</a>
+      <a href="#linha-editorial">Linha editorial</a>
+      <a href="#gerador">Gerador</a>
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#precos">Preços</a>
+      <a href="#biblioteca">Biblioteca</a>
+      <a class="btn-nav" href="#gerador">Testar grátis</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap hero-inner">
+    <div>
+      <span class="eyebrow">Andressa Marketing & Estratégia</span>
+      <h1>Transforme qualquer ideia em conteúdo que vende em <em>menos de 60 segundos.</em></h1>
+      <p class="sub">A primeira IA que aprende com o seu sucesso. Pare de brigar com a folha em branco e comece a postar roteiros profissionais feitos sob medida para o seu público — com hook, storytelling e CTA prontos.</p>
+      <div class="hero-cta-row">
+        <a href="#gerador" class="btn-primary">Gerar meu primeiro roteiro →</a>
+        <a href="#precos" class="btn-ghost">Ver planos</a>
+      </div>
+    </div>
+
+    <div id="gerador" class="lab-card">
+      <span class="lab-card-tab mono">Gerador de conteúdo — ao vivo</span>
+
+      <div id="perfil-indicador" style="display:none;align-items:center;gap:8px;margin-bottom:16px;padding:9px 13px;background:#E8F0E6;border:1px solid #5B8A63;border-radius:100px;font-size:0.82rem;color:#2E5934;width:fit-content;">
+        <span style="width:7px;height:7px;border-radius:50%;background:#4C8355;flex-shrink:0;"></span>
+        Perfil da marca conectado — a IA vai usar seu briefing
+      </div>
+
+      <div class="field-row">
+        <div>
+          <label for="nicho">Seu nicho</label>
+          <input type="text" id="nicho" placeholder="ex: Nutricionista, Advogado, Personal trainer">
+        </div>
+        <div>
+          <label for="tom">Tom de voz</label>
+          <select id="tom">
+            <option>Descontraído</option>
+            <option>Formal</option>
+            <option>Técnico</option>
+            <option>Inspirador</option>
+          </select>
+        </div>
+      </div>
+
+      <label>Formato</label>
+      <div class="chip-row" id="formato-chips">
+        <button type="button" class="chip active" data-formato="Reels">Reels</button>
+        <button type="button" class="chip" data-formato="Stories">Stories</button>
+        <button type="button" class="chip" data-formato="LinkedIn">LinkedIn</button>
+      </div>
+
+      <label>Tipo de conteúdo</label>
+      <div class="chip-row" id="tipo-chips">
+        <button type="button" class="chip active" data-tipo="IA decide">IA decide (varia)</button>
+        <button type="button" class="chip" data-tipo="Observação do dia a dia">Observação do dia a dia</button>
+        <button type="button" class="chip" data-tipo="Case de cliente">Case de cliente</button>
+        <button type="button" class="chip" data-tipo="Reflexão direta">Reflexão direta</button>
+        <button type="button" class="chip" data-tipo="Mito x verdade">Mito x verdade</button>
+        <button type="button" class="chip" data-tipo="Bastidor rápido">Bastidor rápido</button>
+      </div>
+
+      <label for="tema">Tema ou assunto do dia</label>
+      <input type="text" id="tema" placeholder="ex: Por que meus clientes não fecham comigo">
+
+      <label for="detalhe" style="margin-top:14px;">Um caso real de cliente ou detalhe pra história (opcional, só é usado quando fizer sentido pro tipo escolhido)</label>
+      <textarea id="detalhe" rows="2" placeholder="ex: uma cliente que te mandou mensagem às 23h desabafando, uma situação que ela vivia antes de te procurar, uma frase que ela disse quando percebeu a virada..."></textarea>
+
+      <button class="gen-btn" id="gerar-btn" onclick="gerarRoteiro()">
+        <span id="gerar-label">Gerar roteiro com IA</span>
+      </button>
+
+      <div id="error-box" class="error-box" style="display:none;"></div>
+
+      <div id="result-wrap" class="result-wrap">
+        <div class="specimen">
+          <div class="specimen-num">01</div>
+          <div class="specimen-label">Hook</div>
+          <div class="specimen-text" id="out-hook"></div>
+        </div>
+        <div class="specimen">
+          <div class="specimen-num">02</div>
+          <div class="specimen-label">Storytelling</div>
+          <div class="specimen-text" id="out-story"></div>
+        </div>
+        <div class="specimen">
+          <div class="specimen-num">03</div>
+          <div class="specimen-label">CTA</div>
+          <div class="specimen-text" id="out-cta"></div>
+        </div>
+        <div id="plano-postagem-wrap" style="display:none;margin-top:24px;">
+          <div class="specimen-label" style="margin-bottom:4px;">Plano de postagem, passo a passo</div>
+          <div id="plano-postagem-list"></div>
+        </div>
+
+        <div class="result-actions">
+          <button class="btn-small primary" onclick="salvarNaBiblioteca()">Salvar na biblioteca</button>
+          <button class="btn-small" onclick="copiarRoteiro()">Copiar texto</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="perfil-marca" style="padding-top:64px;">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-eyebrow">Almoxarifado de informações</span>
+      <h2>Perfil da marca — o cérebro da sua IA.</h2>
+      <p>Antes de gerar qualquer conteúdo, cada cliente preenche esse briefing uma vez: quem ela é, o que faz, o que entrega, o que vende e o que transforma na vida das pessoas. É essa informação que a IA guarda e usa em toda geração — quanto mais completo, mais os roteiros soam como ela de verdade, e não como um texto genérico.</p>
+    </div>
+
+    <div class="lab-card">
+      <span class="lab-card-tab mono">Briefing da marca</span>
+
+      <label for="briefing-texto">Conte sobre você: quem você é, o que faz, o que entrega, o que vende, o que você transforma na vida de quem te contrata</label>
+      <textarea id="briefing-texto" rows="8" placeholder="Ex: Sou nutricionista funcional, atendo mulheres de 30 a 45 anos que já tentaram de tudo pra emagrecer e não conseguiram. Não vendo dieta, vendo entendimento sobre o próprio corpo. O que mais escuto das minhas clientes é 'finalmente alguém me explicou isso direito'. Comecei nisso depois de eu mesma ter passado 10 anos fazendo dieta restritiva e não entender por que nada funcionava..."></textarea>
+
+      <label style="margin-top:18px;">Ou envie um documento com esse briefing (.txt, .docx ou .pdf)</label>
+      <input type="file" id="briefing-file" accept=".txt,.docx,.pdf" onchange="lerArquivoBriefing(event)">
+      <div id="briefing-file-status" class="mono" style="font-size:0.78rem;margin-top:8px;color:rgba(22,36,31,0.55);"></div>
+
+      <button class="gen-btn" style="background:var(--petrol);margin-top:20px;" onclick="salvarPerfil()">Salvar perfil da marca</button>
+
+      <div id="perfil-status" style="display:none;margin-top:14px;padding:12px 14px;border-radius:10px;font-size:0.86rem;"></div>
+    </div>
+  </div>
+</section>
+
+<section id="linha-editorial">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-eyebrow">Planejamento semanal</span>
+      <h2>Linha editorial da semana</h2>
+      <p>Defina o fio condutor da semana e a IA sugere de 3 a 7 ângulos conectados a esse mesmo tema, cada um numa estrutura diferente, pra manter conexão entre os posts sem virar sempre a mesma história repetida.</p>
+    </div>
+
+    <div class="lab-card">
+      <span class="lab-card-tab mono">Planejar semana</span>
+
+      <label for="tema-semana">Fio condutor da semana</label>
+      <input type="text" id="tema-semana" placeholder="ex: desafios de quem está saindo da CLT pra empreender">
+
+      <div class="field-row" style="margin-top:14px;">
+        <div>
+          <label for="qtd-conteudos">Quantos conteúdos</label>
+          <select id="qtd-conteudos">
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5" selected>5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="gen-btn" style="background:var(--petrol);" id="linha-btn" onclick="gerarLinhaEditorial()">
+        <span id="linha-label">Gerar linha editorial da semana</span>
+      </button>
+
+      <div id="linha-error" class="error-box" style="display:none;"></div>
+      <div id="linha-resultado" style="margin-top:20px;"></div>
+    </div>
+  </div>
+</section>
+
+<section id="beneficios">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-eyebrow">Proposta de valor</span>
+      <h2>Feito para quem vive sem tempo para planejar conteúdo.</h2>
+      <p>Cada recurso resolve um gargalo real de quem cria conteúdo sozinho — sem equipe, sem agência, sem tempo sobrando.</p>
+    </div>
+    <div class="value-grid">
+      <div class="value-item">
+        <div class="num mono">01</div>
+        <h3>Fim do bloqueio criativo</h3>
+        <p>Ideias infinitas baseadas no seu nicho específico de atuação.</p>
+      </div>
+      <div class="value-item">
+        <div class="num mono">02</div>
+        <h3>Economia de tempo</h3>
+        <p>Horas de planejamento viram minutos de revisão.</p>
+      </div>
+      <div class="value-item">
+        <div class="num mono">03</div>
+        <h3>Qualidade de agência</h3>
+        <p>Estruturas de storytelling que antes exigiam copywriter contratado.</p>
+      </div>
+      <div class="value-item">
+        <div class="num mono">04</div>
+        <h3>Autoridade e constância</h3>
+        <p>Presença digital ininterrupta, gerando confiança no seu público.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="como-funciona" style="background:var(--paper-card);">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-eyebrow">Jornada do usuário</span>
+      <h2>Como funciona, do tema ao post publicado.</h2>
+      <p>A IA aprende com cada publicação: quanto mais você usa, mais ela escreve no seu estilo de maior desempenho.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num mono">01</div>
+        <div><h3>Defina seu perfil</h3><p>Conte seu nicho, público-alvo e tom de voz. Isso alimenta o contexto mestre da IA.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-num mono">02</div>
+        <div><h3>Escolha o tema e o formato</h3><p>Digite um assunto simples — a IA processa e entrega o roteiro estruturado com hook, storytelling e CTA.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-num mono">03</div>
+        <div><h3>Ajuste e publique</h3><p>Faça pequenos ajustes manuais, salve na biblioteca e publique nas suas redes.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-num mono">04</div>
+        <div><h3>Marque o desempenho</h3><p>Diga se o post teve alto, médio ou baixo resultado — a IA aprende e prioriza esse estilo nas próximas gerações.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="precos">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-eyebrow">Modelo de negócio</span>
+      <h2>Planos por assinatura mensal.</h2>
+      <p>7 dias de teste grátis em qualquer plano. Sem multa, cancele quando quiser.</p>
+    </div>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <div class="plan-name mono">Essencial</div>
+        <div class="price-tag">R$97<span>/mês</span></div>
+        <ul class="feat-list">
+          <li>Apenas 1 formato (ex: Reels)</li>
+          <li>Até 12 roteiros por mês</li>
+          <li>IA padrão (sem aprendizado)</li>
+          <li>Suporte via central de ajuda</li>
+        </ul>
+        <button class="btn-plan">Começar teste grátis</button>
+      </div>
+      <div class="price-card featured">
+        <span class="featured-badge">Mais popular</span>
+        <div class="plan-name mono">Profissional</div>
+        <div class="price-tag">R$197<span>/mês</span></div>
+        <ul class="feat-list">
+          <li>Todos os formatos: Stories, LinkedIn, Reels</li>
+          <li>Roteiros ilimitados</li>
+          <li>IA adaptativa — aprende com você</li>
+          <li>Suporte por e-mail e chat</li>
+        </ul>
+        <button class="btn-plan">Começar teste grátis</button>
+      </div>
+      <div class="price-card">
+        <div class="plan-name mono">Premium</div>
+        <div class="price-tag">R$397<span>/mês</span></div>
+        <ul class="feat-list">
+          <li>Todos os formatos + Blog/Newsletter</li>
+          <li>Roteiros ilimitados</li>
+          <li>Análise preditiva avançada</li>
+          <li>Prioritário + consultoria trimestral</li>
+        </ul>
+        <button class="btn-plan">Começar teste grátis</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="biblioteca" style="background:var(--paper-card);">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-eyebrow">Sua conta</span>
+      <h2>Biblioteca de conteúdos</h2>
+      <p>Todo roteiro gerado e salvo fica guardado aqui, pronto para revisar antes de publicar.</p>
+    </div>
+    <div id="biblioteca-list">
+      <div class="library-empty" id="lib-empty">Nenhum roteiro salvo ainda. Gere um roteiro acima e clique em "Salvar na biblioteca".</div>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap" style="max-width:760px;">
+    <div class="section-head">
+      <span class="section-eyebrow">Dúvidas frequentes</span>
+      <h2>Perguntas frequentes</h2>
+    </div>
+    <details class="faq-item">
+      <summary>Preciso saber gravar vídeos?</summary>
+      <p>Não. Fornecemos o roteiro e as instruções de cena — você só precisa seguir o script.</p>
+    </details>
+    <details class="faq-item">
+      <summary>Serve para o meu nicho?</summary>
+      <p>Sim, a IA é treinada em mais de 50 áreas de atuação profissional e negócios locais.</p>
+    </details>
+    <details class="faq-item">
+      <summary>Posso personalizar o texto?</summary>
+      <p>Com certeza. A IA entrega a base 90% pronta, permitindo que você dê seu toque final.</p>
+    </details>
+    <details class="faq-item">
+      <summary>Tem teste grátis?</summary>
+      <p>Sim, oferecemos 7 dias de acesso total para você testar a potência da ferramenta.</p>
+    </details>
+    <details class="faq-item">
+      <summary>Posso cancelar quando quiser?</summary>
+      <p>Sim, sem multas ou contratos de fidelidade.</p>
+    </details>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div><strong>Laboratório de Conteúdo com IA</strong> — Andressa Marketing & Estratégia</div>
+    <div>Blueprint: 15 de agosto de 2026</div>
+  </div>
+</footer>
+
+<script>
+let formatoSelecionado = "Reels";
+let tipoSelecionado = "IA decide";
+let ultimoRoteiro = null;
+let biblioteca = [];
+let perfilMarca = { texto: "" };
+let linhaEditorialAtual = [];
+
+document.querySelectorAll('#tipo-chips .chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#tipo-chips .chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    tipoSelecionado = chip.dataset.tipo;
+  });
+});
+
+if(window['pdfjsLib']){
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+async function lerArquivoBriefing(event){
+  const file = event.target.files[0];
+  const status = document.getElementById('briefing-file-status');
+  if(!file) return;
+
+  status.textContent = "Lendo arquivo...";
+  try{
+    const ext = file.name.split('.').pop().toLowerCase();
+    let texto = "";
+
+    if(ext === "txt"){
+      texto = await file.text();
+    } else if(ext === "docx"){
+      const arrayBuffer = await file.arrayBuffer();
+      const result = await mammoth.extractRawText({ arrayBuffer });
+      texto = result.value;
+    } else if(ext === "pdf"){
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = "";
+      for(let i = 1; i <= pdf.numPages; i++){
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        fullText += content.items.map(it => it.str).join(" ") + "\n";
+      }
+      texto = fullText;
+    } else {
+      status.textContent = "Formato não suportado. Use .txt, .docx ou .pdf.";
+      return;
+    }
+
+    texto = texto.trim();
+    document.getElementById('briefing-texto').value = texto;
+    status.textContent = `"${file.name}" carregado (${texto.length} caracteres). Revise o texto acima e clique em Salvar perfil.`;
+  }catch(err){
+    console.error(err);
+    status.textContent = "Não foi possível ler esse arquivo. Tente colar o texto diretamente na caixa acima.";
+  }
+}
+
+function salvarPerfil(){
+  const texto = document.getElementById('briefing-texto').value.trim();
+  const statusBox = document.getElementById('perfil-status');
+  statusBox.style.display = 'block';
+
+  if(!texto){
+    statusBox.style.background = '#FCEBE6';
+    statusBox.style.border = '1px solid var(--coral)';
+    statusBox.style.color = 'var(--coral-deep)';
+    statusBox.textContent = "Escreva ou envie um briefing antes de salvar.";
+    return;
+  }
+
+  perfilMarca.texto = texto;
+  statusBox.style.background = '#E8F0E6';
+  statusBox.style.border = '1px solid #5B8A63';
+  statusBox.style.color = '#2E5934';
+  statusBox.textContent = `Perfil salvo — ${texto.length} caracteres. A partir de agora, toda geração de conteúdo vai usar esse briefing.`;
+
+  atualizarIndicadorPerfil();
+}
+
+function atualizarIndicadorPerfil(){
+  const el = document.getElementById('perfil-indicador');
+  if(!el) return;
+  el.style.display = perfilMarca.texto ? 'flex' : 'none';
+}
+
+document.querySelectorAll('#formato-chips .chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#formato-chips .chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    formatoSelecionado = chip.dataset.formato;
+  });
+});
+
+function removerTravessoes(texto){
+  if(!texto) return texto;
+  return texto
+    .replace(/\s*[—–]\s*/g, ", ")
+    .replace(/,\s*,/g, ",")
+    .replace(/,\s*\./g, ".")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function parseRoteiroResponse(texto){
+  const hookMatch = texto.match(/###HOOK###([\s\S]*?)###STORYTELLING###/);
+  const storyMatch = texto.match(/###STORYTELLING###([\s\S]*?)###CTA###/);
+  const ctaMatch = texto.match(/###CTA###([\s\S]*?)###PLANO###/);
+  const planoMatch = texto.match(/###PLANO###([\s\S]*?)###FIM###/);
+
+  const hook = hookMatch ? hookMatch[1].trim() : "";
+  const storytelling = storyMatch ? storyMatch[1].trim() : "";
+  const cta = ctaMatch ? ctaMatch[1].trim() : "";
+
+  let plano_postagem = [];
+  if(planoMatch){
+    plano_postagem = planoMatch[1]
+      .trim()
+      .split("\n")
+      .map(l => l.trim())
+      .filter(Boolean)
+      .map(linha => {
+        const partes = linha.split("||").map(p => p.trim());
+        return {
+          numero: partes[0] || "",
+          tipo: partes[1] || "",
+          instrucao: partes[2] || "",
+          dica: partes[3] || ""
+        };
+      });
+  }
+
+  if(!hook || !storytelling || !cta){
+    throw new Error("A resposta da IA veio incompleta ou fora do formato esperado.");
+  }
+
+  return { hook, storytelling, cta, plano_postagem };
+}
+
+async function gerarRoteiro(){
+  const tema = document.getElementById('tema').value.trim();
+  const nicho = document.getElementById('nicho').value.trim() || "negócio local";
+  const tom = document.getElementById('tom').value;
+  const detalhe = document.getElementById('detalhe').value.trim();
+  const errorBox = document.getElementById('error-box');
+  const btn = document.getElementById('gerar-btn');
+  const label = document.getElementById('gerar-label');
+  const resultWrap = document.getElementById('result-wrap');
+
+  errorBox.style.display = 'none';
+
+  if(!tema){
+    errorBox.textContent = "Digite um tema ou assunto antes de gerar.";
+    errorBox.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  label.innerHTML = '<span class="spinner"></span> Gerando roteiro...';
+
+  const systemPrompt = `Você é uma ghostwriter especializada em Stories e conteúdo de redes sociais extremamente humanizado — do tipo que faz quem assiste sentir "nossa, é exatamente isso que eu vivo, ela me entende", não um copywriter de fórmula de vendas. Você escreve para mentoras/profissionais que constroem comunidade de verdade com a própria audiência (as clientes em potencial), não funil de conversão.
+
+REGRA CENTRAL: o centro emocional do post é sempre a realidade de quem está assistindo, a cliente em potencial, NUNCA a trajetória pessoal da profissional. A profissional pode aparecer como quem observa, testemunha ou reflete sobre isso, mas o post não é sobre a jornada dela.
+
+Existem 5 estruturas possíveis de conteúdo, e a coleção de posts de uma semana deve VARIAR entre elas, não repetir sempre a mesma:
+1. Observação do dia a dia: uma cena leve e reconhecível da rotina do público, um padrão, um hábito, uma sensação comum. Não é uma "história" com personagem e virada, é mais um flagra ou constatação do tipo "sabe quando...".
+2. Case de cliente: o caso real de UMA cliente específica que a profissional ajudou (anonimizada), com situação inicial e virada.
+3. Reflexão direta: um pensamento em voz alta, uma opinião ou provocação sobre algo que o público vive, sem precisar de nenhum caso ou anedota.
+4. Mito x verdade: desmontar de forma leve uma crença comum do público.
+5. Bastidor rápido: um flagra leve e real do dia a dia da profissional, sem drama, só natural.
+
+O TIPO_DE_CONTEUDO informado no pedido diz qual estrutura usar nesse post específico. Se vier "IA decide", escolha a que fizer mais sentido pro tema, mas evite cair sempre em "Case de cliente" só porque é mais fácil, o objetivo é variedade real.
+
+REGRA MUITO IMPORTANTE: só use abertura de fala relatada, tipo "ela me ligou", "ela me mandou mensagem", "ela me disse", "ela me contou", quando o TIPO_DE_CONTEUDO for exatamente "Case de cliente". Em qualquer outro tipo, isso é PROIBIDO, a cena precisa vir de outro lugar (uma observação, um pensamento, uma constatação, um flagra), sem depender de um relato de terceiros pra funcionar.
+
+Regras obrigatórias:
+1. PROIBIDO usar clichês de copywriting genérico: nada de "você passou anos acumulando", "a maioria das pessoas", "o erro que 90% comete", "isso muda tudo", frases motivacionais de feed de Instagram. Se a frase poderia estar em qualquer post de qualquer nicho, ela está errada.
+2. Use pelo menos um detalhe concreto e específico (um horário, um lugar, um objeto, uma sensação física) que ancore o post na realidade do público, isso é o que faz soar real, não fabricado por IA.
+3. Estrutura com início, meio e fim, adaptada ao tipo de conteúdo escolhido:
+   - INÍCIO (vira o "hook"): a abertura específica daquele tipo (cena, observação, provocação, mito, flagra), nunca uma afirmação genérica de efeito tipo "você já se sentiu sobrecarregada?".
+   - MEIO (vira o "storytelling", mas nem sempre é literalmente uma história): o desenvolvimento da ideia, com um detalhe concreto que sustenta o ponto.
+   - FIM (vira o "cta"): não é ordem de venda nem "comente a palavra X". É um convite genuíno pra continuar a conversa, uma pergunta real, ou um convite pra quem se identificou compartilhar a própria experiência.
+4. Escreva como a pessoa fala de verdade: frases curtas, pausas, reticências quando fizer sentido, imperfeições propositais. Nunca deve parecer texto revisado por um departamento de marketing.
+5. O objetivo do post não é vender, é pertencimento. Quem assiste precisa sentir "ela entende exatamente o que eu passo" e "eu faço parte disso".
+6. Adapte ao formato: Stories = bem íntimo, como falar pra uma amiga, frases curtíssimas, quase um diário em voz alta; Reels = falado e com ritmo, mas ainda pessoal e sem parecer roteiro decorado; LinkedIn = mais estruturado, mas sem perder a voz humana e sem jargão corporativo.
+7. Se um "caso ou detalhe real" for fornecido pelo usuário, USE esse caso literalmente, mas só como protagonismo de cliente se o tipo de conteúdo for "Case de cliente"; nos outros tipos, adapte esse detalhe como inspiração pra cena sem virar um relato de terceiros.
+8. Se houver um BRIEFING COMPLETO DA MARCA fornecido, ele é a fonte de verdade principal sobre quem é a profissional, como ela fala, o que ela entrega e transforma, e sobretudo quem é o público dela, priorize essas informações sobre os campos rápidos de nicho/tom, e puxe detalhes específicos dele sempre que possível, em vez de generalizar.
+9. PROIBIDO usar travessão (—) em qualquer lugar do texto, em nenhuma hipótese. Travessão é a marca visual mais óbvia de texto gerado por IA. Para pausas ou conectar ideias, use vírgula, ponto, ponto final curto ou reticências, nunca travessão.
+
+Além do roteiro, você também entrega um PLANO DE POSTAGEM: um passo a passo prático dizendo exatamente o que ela deve postar, em qual ordem, e se aquele trecho é falado em vídeo ou é texto na tela. O objetivo é pegar a pessoa pela mão, ela não pode ficar em dúvida do que fazer.
+
+Regras do plano de postagem, adaptado ao formato:
+- Se o formato for Stories: divida o conteúdo em 4 a 6 blocos, cada bloco é um Story separado. Alterne entre "Vídeo falado" (quando faz sentido ela aparecer falando pra câmera, geralmente bom pro início da história pra prender atenção) e "Texto na tela" (quando é melhor deixar uma frase de impacto, uma pergunta, ou uma citação só de texto). O cta costuma funcionar bem como texto direto ou com figurinha de enquete/pergunta.
+- Se o formato for Reels: divida em no máximo 5 blocos de tempo (ex: "0-3s", "3-8s", "8-15s", "15-25s"), todos do tipo "Vídeo falado" (é um vídeo contínuo), mas use a dica de cada bloco pra indicar quando colocar texto sobreposto na tela reforçando a fala.
+- Se o formato for LinkedIn: retorne 1 ou 2 blocos do tipo "Texto do post", indicando como estruturar o texto (parágrafos curtos, quebras de linha), sem precisar de vídeo.
+
+Seja direto e objetivo em cada campo de texto, instrucao e dica devem ter no máximo 1-2 frases curtas cada, para a resposta inteira caber dentro do limite de tamanho.
+
+Cada bloco do plano_postagem deve ter:
+- numero: a ordem (1, 2, 3...) ou a marcação de tempo no caso de Reels
+- tipo: exatamente um destes textos: "Vídeo falado", "Texto na tela" ou "Texto do post"
+- instrucao: o que ela deve falar ou escrever especificamente nesse bloco (pode ser uma frase extraída do roteiro ou adaptada pra caber naquele pedaço)
+- dica: uma orientação prática rápida de atuação ou produção (ex: "olhe direto pra câmera e fale devagar", "deixe a frase na tela por uns 4 segundos antes de passar", "use a figurinha de enquete aqui")
+
+Responda EXATAMENTE nesse formato de texto simples, sem markdown, sem aspas envolvendo os textos, sem explicações antes ou depois, respeitando exatamente essas marcações:
+
+###HOOK###
+(texto do hook aqui)
+###STORYTELLING###
+(texto do storytelling aqui)
+###CTA###
+(texto do cta aqui)
+###PLANO###
+(uma linha por bloco do plano de postagem, no formato exato: numero||tipo||instrucao||dica)
+###FIM###
+
+Não use o caractere # em nenhum outro lugar do texto além dessas marcações. Não use aspas duplas dentro dos textos, se precisar indicar uma fala ou citação use aspas simples.`;
+
+  const perfilContext = perfilMarca.texto
+    ? `\n\nBRIEFING COMPLETO DA MARCA (fonte de verdade principal — use isso para entender quem é essa pessoa, o que ela entrega, vende e transforma na vida das pessoas):\n${perfilMarca.texto}`
+    : "";
+
+  const userPrompt = `Nicho: ${nicho}\nTom de voz: ${tom}\nFormato: ${formatoSelecionado}\nTipo de conteúdo (TIPO_DE_CONTEUDO): ${tipoSelecionado}\nTema ou assunto do dia: ${tema}${detalhe ? `\nDetalhe real disponível: ${detalhe}` : ""}${perfilContext}`;
+
+  try{
+    const response = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 2048,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userPrompt }]
+      })
+    });
+
+    if(!response.ok){
+      throw new Error("Falha na resposta da API (" + response.status + ")");
+    }
+
+    const data = await response.json();
+
+    if(data.stop_reason === "max_tokens"){
+      throw new Error("A resposta da IA foi cortada por ser longa demais.");
+    }
+
+    const textBlock = (data.content || []).find(b => b.type === "text");
+    if(!textBlock){
+      throw new Error("A IA não retornou texto.");
+    }
+
+    let clean = textBlock.text.trim().replace(/^```[a-z]*/i, "").replace(/```$/, "").trim();
+    const parsed = parseRoteiroResponse(clean);
+
+    parsed.hook = removerTravessoes(parsed.hook);
+    parsed.storytelling = removerTravessoes(parsed.storytelling);
+    parsed.cta = removerTravessoes(parsed.cta);
+    if(Array.isArray(parsed.plano_postagem)){
+      parsed.plano_postagem.forEach(item => {
+        item.instrucao = removerTravessoes(item.instrucao);
+        item.dica = removerTravessoes(item.dica);
+      });
+    }
+
+    document.getElementById('out-hook').textContent = parsed.hook || "";
+    document.getElementById('out-story').textContent = parsed.storytelling || "";
+    document.getElementById('out-cta').textContent = parsed.cta || "";
+
+    renderPlanoPostagem(parsed.plano_postagem);
+
+    ultimoRoteiro = { tema, nicho, tom, formato: formatoSelecionado, ...parsed };
+
+    resultWrap.classList.add('show');
+    resultWrap.scrollIntoView({behavior:'smooth', block:'nearest'});
+
+  }catch(err){
+    console.error(err);
+    if(err.message && (err.message.includes("cortada") || err.message.includes("incompleta"))){
+      errorBox.textContent = "A resposta ficou grande demais e foi cortada no meio. Clique em gerar de novo, geralmente resolve.";
+    } else {
+      errorBox.textContent = "Não foi possível gerar o roteiro agora. Tente novamente em instantes.";
+    }
+    errorBox.style.display = 'block';
+  }finally{
+    btn.disabled = false;
+    label.textContent = "Gerar roteiro com IA";
+  }
+}
+
+function parseLinhaEditorialResponse(texto){
+  const blocos = texto.split("###ITEM###").slice(1);
+  const linha = blocos.map(bloco => {
+    const linhaTexto = bloco.split("###FIM###")[0].trim().split("\n")[0];
+    const partes = linhaTexto.split("||").map(p => p.trim());
+    return {
+      dia: partes[0] || "",
+      tipo: partes[1] || "",
+      angulo: partes[2] || "",
+      gancho_curto: partes[3] || ""
+    };
+  }).filter(item => item.dia && item.angulo);
+
+  if(linha.length === 0){
+    throw new Error("A resposta da IA veio incompleta ou fora do formato esperado.");
+  }
+
+  return linha;
+}
+
+async function gerarLinhaEditorial(){
+  const temaSemana = document.getElementById('tema-semana').value.trim();
+  const qtd = document.getElementById('qtd-conteudos').value;
+  const nicho = document.getElementById('nicho').value.trim() || "negócio local";
+  const errorBox = document.getElementById('linha-error');
+  const btn = document.getElementById('linha-btn');
+  const label = document.getElementById('linha-label');
+
+  errorBox.style.display = 'none';
+
+  if(!temaSemana){
+    errorBox.textContent = "Escreva o fio condutor da semana antes de gerar.";
+    errorBox.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  label.innerHTML = '<span class="spinner"></span> Planejando semana...';
+
+  const systemPrompt = `Você é uma estrategista de conteúdo que planeja a semana de postagens de uma profissional, criando uma linha editorial coesa: os posts se conectam por um fio condutor comum (o tema central da semana), mas cada um aborda um ângulo diferente, pra não ficar repetitivo nem soar como posts soltos sem nenhuma conexão entre si.
+
+Gere a quantidade de ideias pedida, cada uma com um ângulo diferente sobre o mesmo fio condutor. VARIE A ESTRUTURA entre elas, não deixe todas no formato de "contar um caso de cliente relatado" (do tipo "ela me ligou", "ela me disse", "ela me contou"). Distribua entre estas 5 estruturas ao longo da semana, sem repetir a mesma estrutura em dias seguidos quando possível:
+- "Observação do dia a dia": uma cena leve e reconhecível da rotina do público, um padrão ou hábito comum, sem precisar ser uma anedota formal.
+- "Case de cliente": o caso real de UMA cliente (use no máximo 1 ou 2 do total, nunca mais que isso).
+- "Reflexão direta": um pensamento em voz alta, opinião ou provocação sobre o dia a dia do público.
+- "Mito x verdade": desmontar uma crença comum do público de forma leve.
+- "Bastidor rápido": um flagra leve e real da rotina da profissional, sem drama.
+
+Cada item deve ter:
+- dia: dia da semana sugerido (ex: "Segunda-feira")
+- tipo: exatamente um destes textos: "Observação do dia a dia", "Case de cliente", "Reflexão direta", "Mito x verdade", "Bastidor rápido"
+- angulo: 1 frase curta e específica descrevendo o ângulo daquele dia dentro do tema central (isso vai virar o campo "tema" de um gerador de roteiro depois, então precisa ser claro e específico, não genérico)
+- gancho_curto: um exemplo curto de como esse post poderia abrir, seguindo o mesmo estilo humanizado (sem clichê de copy, sem travessão, sem fala relatada a menos que o tipo seja "Case de cliente")
+
+Seja direto, cada campo de texto deve ter no máximo 1-2 frases curtas.
+
+Responda EXATAMENTE nesse formato de texto simples, uma linha por item, sem markdown, sem explicações antes ou depois:
+
+###ITEM###
+dia||tipo||angulo||gancho_curto
+###ITEM###
+dia||tipo||angulo||gancho_curto
+(repita ###ITEM### para cada conteúdo pedido)
+###FIM###
+
+Não use o caractere # nem || em nenhum outro lugar do texto além dessas marcações.`;
+
+  const userPrompt = `Fio condutor da semana: ${temaSemana}\nNicho: ${nicho}\nQuantidade de conteúdos: ${qtd}${perfilMarca.texto ? `\n\nBRIEFING COMPLETO DA MARCA:\n${perfilMarca.texto}` : ""}`;
+
+  try{
+    const response = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1800,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userPrompt }]
+      })
+    });
+
+    if(!response.ok){
+      throw new Error("Falha na resposta da API (" + response.status + ")");
+    }
+
+    const data = await response.json();
+
+    if(data.stop_reason === "max_tokens"){
+      throw new Error("A resposta da IA foi cortada por ser longa demais.");
+    }
+
+    const textBlock = (data.content || []).find(b => b.type === "text");
+    if(!textBlock){
+      throw new Error("A IA não retornou texto.");
+    }
+
+    let clean = textBlock.text.trim().replace(/^```[a-z]*/i, "").replace(/```$/, "").trim();
+    const linha = parseLinhaEditorialResponse(clean);
+
+    linha.forEach(item => {
+      item.angulo = removerTravessoes(item.angulo);
+      item.gancho_curto = removerTravessoes(item.gancho_curto);
+    });
+
+    renderLinhaEditorial(linha);
+
+  }catch(err){
+    console.error(err);
+    if(err.message && (err.message.includes("cortada") || err.message.includes("incompleta"))){
+      errorBox.textContent = "A resposta ficou grande demais e foi cortada no meio. Clique em gerar de novo, geralmente resolve.";
+    } else {
+      errorBox.textContent = "Não foi possível gerar a linha editorial agora. Tente novamente em instantes.";
+    }
+    errorBox.style.display = 'block';
+  }finally{
+    btn.disabled = false;
+    label.textContent = "Gerar linha editorial da semana";
+  }
+}
+
+function renderLinhaEditorial(linha){
+  const resultado = document.getElementById('linha-resultado');
+  if(!Array.isArray(linha) || linha.length === 0){
+    resultado.innerHTML = '';
+    return;
+  }
+  linhaEditorialAtual = linha;
+  resultado.innerHTML = linha.map((item, idx) => `
+    <div class="plano-item" style="align-items:flex-start;">
+      <div class="plano-num mono">${idx + 1}</div>
+      <div style="flex:1;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
+          <strong>${escapeHtml(item.dia || '')}</strong>
+          <span class="plano-badge texto">${escapeHtml(item.tipo || '')}</span>
+        </div>
+        <div class="plano-instrucao">${escapeHtml(item.angulo || '')}</div>
+        <div class="plano-dica" style="margin-bottom:10px;">"${escapeHtml(item.gancho_curto || '')}"</div>
+        <button class="btn-small primary" onclick="usarDiaNoGerador(${idx})">Usar esse dia no gerador</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function usarDiaNoGerador(idx){
+  const item = linhaEditorialAtual[idx];
+  if(!item) return;
+
+  document.getElementById('tema').value = item.angulo || '';
+
+  document.querySelectorAll('#tipo-chips .chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.tipo === item.tipo);
+  });
+  tipoSelecionado = item.tipo && document.querySelector(`#tipo-chips [data-tipo="${item.tipo}"]`) ? item.tipo : "IA decide";
+
+  document.getElementById('gerador').scrollIntoView({ behavior: 'smooth' });
+}
+
+function renderPlanoPostagem(plano){
+  const wrap = document.getElementById('plano-postagem-wrap');
+  const list = document.getElementById('plano-postagem-list');
+  if(!Array.isArray(plano) || plano.length === 0){
+    wrap.style.display = 'none';
+    list.innerHTML = '';
+    return;
+  }
+  wrap.style.display = 'block';
+  list.innerHTML = plano.map(item => {
+    const tipoTexto = item.tipo || "";
+    const tipoClass = tipoTexto.toLowerCase().includes('vídeo') || tipoTexto.toLowerCase().includes('video') ? 'video' : 'texto';
+    return `
+      <div class="plano-item">
+        <div class="plano-num mono">${escapeHtml(String(item.numero ?? ''))}</div>
+        <div>
+          <span class="plano-badge ${tipoClass}">${escapeHtml(tipoTexto)}</span>
+          <div class="plano-instrucao">${escapeHtml(item.instrucao || '')}</div>
+          <div class="plano-dica">${escapeHtml(item.dica || '')}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function copiarRoteiro(){
+  if(!ultimoRoteiro) return;
+  let texto = `HOOK:\n${ultimoRoteiro.hook}\n\nSTORYTELLING:\n${ultimoRoteiro.storytelling}\n\nCTA:\n${ultimoRoteiro.cta}`;
+  if(Array.isArray(ultimoRoteiro.plano_postagem) && ultimoRoteiro.plano_postagem.length){
+    texto += `\n\nPLANO DE POSTAGEM:\n` + ultimoRoteiro.plano_postagem.map(item =>
+      `${item.numero}. [${item.tipo}] ${item.instrucao}${item.dica ? ` (${item.dica})` : ''}`
+    ).join('\n');
+  }
+  navigator.clipboard.writeText(texto).then(()=>{
+    alert("Roteiro copiado!");
+  }).catch(()=>{
+    alert("Não foi possível copiar automaticamente. Selecione o texto manualmente.");
+  });
+}
+
+function salvarNaBiblioteca(){
+  if(!ultimoRoteiro) return;
+  biblioteca.unshift(ultimoRoteiro);
+  renderBiblioteca();
+  document.getElementById('biblioteca').scrollIntoView({behavior:'smooth'});
+}
+
+function renderBiblioteca(){
+  const list = document.getElementById('biblioteca-list');
+  const empty = document.getElementById('lib-empty');
+  if(biblioteca.length === 0){
+    list.innerHTML = '<div class="library-empty" id="lib-empty">Nenhum roteiro salvo ainda. Gere um roteiro acima e clique em "Salvar na biblioteca".</div>';
+    return;
+  }
+  list.innerHTML = biblioteca.map(item => `
+    <div class="lib-item">
+      <div class="lib-item-head">
+        <span class="lib-theme">${escapeHtml(item.tema)}</span>
+        <span class="lib-tag mono">${escapeHtml(item.formato)}</span>
+      </div>
+      <div class="lib-preview">${escapeHtml(item.hook)}</div>
+    </div>
+  `).join('');
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str || "";
+  return div.innerHTML;
+}
+</script>
+
+</body>
+</html>
