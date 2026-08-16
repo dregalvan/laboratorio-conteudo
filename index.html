@@ -363,7 +363,8 @@
 
       <label>Formato</label>
       <div class="chip-row" id="formato-chips">
-        <button type="button" class="chip" data-formato="Feed">Feed</button>
+        <button type="button" class="chip" data-formato="Post estático">Post estático</button>
+        <button type="button" class="chip" data-formato="Carrossel">Carrossel</button>
         <button type="button" class="chip active" data-formato="Reels">Reels</button>
         <button type="button" class="chip" data-formato="Stories">Stories</button>
         <button type="button" class="chip" data-formato="LinkedIn">LinkedIn</button>
@@ -474,12 +475,7 @@
         </div>
       </div>
 
-      <label style="margin-top:14px;">Formato principal do pacote do dia <span style="text-transform:none;font-weight:400;">(os stories entram sempre junto)</span></label>
-      <div class="chip-row" id="pacote-formato-chips">
-        <button type="button" class="chip active" data-formato="Feed">Feed</button>
-        <button type="button" class="chip" data-formato="Reels">Reels</button>
-        <button type="button" class="chip" data-formato="LinkedIn">LinkedIn</button>
-      </div>
+      <p style="font-size:0.86rem;color:rgba(22,36,31,0.6);margin-top:14px;margin-bottom:0;">A IA já decide, dia a dia, se faz mais sentido ser Reels, post estático ou carrossel — e sempre inclui os Stories do dia junto.</p>
 
       <button class="gen-btn" style="background:var(--petrol);" id="linha-btn" onclick="gerarLinhaEditorial()">
         <span id="linha-label">Gerar linha editorial da semana</span>
@@ -575,7 +571,7 @@
         <div class="plan-name mono">Profissional</div>
         <div class="price-tag">R$197<span>/mês</span></div>
         <ul class="feat-list">
-          <li>Todos os formatos: Feed, Stories, Reels, LinkedIn</li>
+          <li>Todos os formatos: Post estático, Carrossel, Reels, Stories, LinkedIn</li>
           <li>Roteiros ilimitados</li>
           <li>IA adaptativa — aprende com você</li>
           <li>Suporte por e-mail e chat</li>
@@ -653,7 +649,6 @@ let ultimoRoteiro = null;
 let biblioteca = [];
 let perfilMarca = { texto: "" };
 let linhaEditorialAtual = [];
-let formatoPacotePrincipal = "Feed";
 let pacotesDia = {}; // idx do dia -> { principal, stories, formatoPrincipal, dia, angulo }
 
 document.querySelectorAll('#tipo-chips .chip').forEach(chip => {
@@ -744,14 +739,6 @@ document.querySelectorAll('#formato-chips .chip').forEach(chip => {
   });
 });
 
-document.querySelectorAll('#pacote-formato-chips .chip').forEach(chip => {
-  chip.addEventListener('click', () => {
-    document.querySelectorAll('#pacote-formato-chips .chip').forEach(c => c.classList.remove('active'));
-    chip.classList.add('active');
-    formatoPacotePrincipal = chip.dataset.formato;
-  });
-});
-
 function removerTravessoes(texto){
   if(!texto) return texto;
   return texto
@@ -819,12 +806,12 @@ Regras obrigatórias:
 1. PROIBIDO usar clichês de copywriting genérico: nada de "você passou anos acumulando", "a maioria das pessoas", "o erro que 90% comete", "isso muda tudo", frases motivacionais de feed de Instagram. Se a frase poderia estar em qualquer post de qualquer nicho, ela está errada.
 2. Use pelo menos um detalhe concreto e específico (um horário, um lugar, um objeto, uma sensação física) que ancore o post na realidade do público, isso é o que faz soar real, não fabricado por IA.
 3. Estrutura com início, meio e fim, adaptada ao tipo de conteúdo escolhido:
-   - INÍCIO (vira o "hook"): a abertura específica daquele tipo (cena, observação, provocação, mito, flagra), nunca uma afirmação genérica de efeito tipo "você já se sentiu sobrecarregada?".
+   - INÍCIO (vira o "hook"): a abertura específica daquele tipo (cena, observação, provocação, mito, flagra), nunca uma afirmação genérica de efeito tipo "você já se sentiu sobrecarregada?". Quando o formato for Reels, esse hook precisa em especial funcionar como gancho falado de vídeo, a frase exata que ela vai dizer nos primeiros segundos pra travar o dedo de quem estava passando o feed.
    - MEIO (vira o "storytelling", mas nem sempre é literalmente uma história): o desenvolvimento da ideia, com um detalhe concreto que sustenta o ponto.
    - FIM (vira o "cta"): não é ordem de venda nem "comente a palavra X". É um convite genuíno pra continuar a conversa, uma pergunta real, ou um convite pra quem se identificou compartilhar a própria experiência.
 4. Escreva como a pessoa fala de verdade: frases curtas, pausas, reticências quando fizer sentido, imperfeições propositais. Nunca deve parecer texto revisado por um departamento de marketing.
 5. O objetivo do post não é vender, é pertencimento. Quem assiste precisa sentir "ela entende exatamente o que eu passo" e "eu faço parte disso".
-6. Adapte ao formato: Feed = uma legenda pensada pra ser lida com calma, pode desenvolver a ideia um pouco mais que um Story, mas continua soando como uma pessoa contando algo, nunca como texto institucional ou legenda genérica de Instagram; Stories = bem íntimo, como falar pra uma amiga, frases curtíssimas, quase um diário em voz alta; Reels = falado e com ritmo, mas ainda pessoal e sem parecer roteiro decorado; LinkedIn = mais estruturado, mas sem perder a voz humana e sem jargão corporativo.
+6. Adapte ao formato: Post estático = uma legenda pra ler com calma, uma ideia só, pensada pra ficar embaixo de uma única foto ou imagem; Carrossel = a legenda de abertura conecta com um raciocínio que se desenvolve em vários slides, cada slide levando ao próximo; Reels = falado e com ritmo, mas ainda pessoal e sem parecer roteiro decorado, e o HOOK precisa ser especificamente um gancho de abertura de vídeo, pensado pros primeiros 1 a 2 segundos, forte o bastante pra travar o dedo de quem estava passando o feed, nunca uma frase de efeito genérica; Stories = bem íntimo, como falar pra uma amiga, frases curtíssimas, quase um diário em voz alta; LinkedIn = mais estruturado, mas sem perder a voz humana e sem jargão corporativo.
 7. Se um "caso ou detalhe real" for fornecido pelo usuário, USE esse caso literalmente, mas só como protagonismo de cliente se o tipo de conteúdo for "Case de cliente"; nos outros tipos, adapte esse detalhe como inspiração pra cena sem virar um relato de terceiros.
 8. Se houver um BRIEFING COMPLETO DA MARCA fornecido, ele é a fonte de verdade principal sobre quem é a profissional, como ela fala, o que ela entrega e transforma, e sobretudo quem é o público dela, priorize essas informações sobre os campos rápidos de nicho/tom, e puxe detalhes específicos dele sempre que possível, em vez de generalizar.
 9. PROIBIDO usar travessão (—) em qualquer lugar do texto, em nenhuma hipótese. Travessão é a marca visual mais óbvia de texto gerado por IA. Para pausas ou conectar ideias, use vírgula, ponto, ponto final curto ou reticências, nunca travessão.
@@ -832,16 +819,17 @@ Regras obrigatórias:
 Além do roteiro, você também entrega um PLANO DE POSTAGEM: um passo a passo prático dizendo exatamente o que ela deve postar, em qual ordem, e se aquele trecho é falado em vídeo ou é texto na tela. O objetivo é pegar a pessoa pela mão, ela não pode ficar em dúvida do que fazer.
 
 Regras do plano de postagem, adaptado ao formato:
-- Se o formato for Feed: retorne 1 único bloco do tipo "Legenda do post", com a legenda inteira pronta pra colar no Instagram (pode ter quebras de parágrafo dentro do texto da instrucao) e a dica indicando que tipo de imagem, foto ou carrossel combina com esse texto.
+- Se o formato for Post estático: retorne 1 único bloco do tipo "Legenda do post", com a legenda inteira pronta pra colar no Instagram (pode ter quebras de parágrafo dentro do texto da instrucao) e a dica indicando que tipo de imagem ou foto combina com esse texto.
+- Se o formato for Carrossel: divida em 4 a 8 blocos do tipo "Slide do carrossel", cada bloco com o texto curto daquele slide (instrucao) e a dica indicando que imagem, ícone ou elemento visual combina com aquele slide especificamente. O primeiro slide deve ser a abertura/gancho que faz a pessoa arrastar pro próximo, e a legenda do post (fora dos slides) some com o hook.
 - Se o formato for Stories: divida o conteúdo em 4 a 6 blocos, cada bloco é um Story separado. Alterne entre "Vídeo falado" (quando faz sentido ela aparecer falando pra câmera, geralmente bom pro início da história pra prender atenção) e "Texto na tela" (quando é melhor deixar uma frase de impacto, uma pergunta, ou uma citação só de texto). O cta costuma funcionar bem como texto direto ou com figurinha de enquete/pergunta.
-- Se o formato for Reels: divida em no máximo 5 blocos de tempo (ex: "0-3s", "3-8s", "8-15s", "15-25s"), todos do tipo "Vídeo falado" (é um vídeo contínuo), mas use a dica de cada bloco pra indicar quando colocar texto sobreposto na tela reforçando a fala.
+- Se o formato for Reels: divida em no máximo 5 blocos de tempo (ex: "0-3s", "3-8s", "8-15s", "15-25s"), todos do tipo "Vídeo falado" (é um vídeo contínuo), mas use a dica de cada bloco pra indicar quando colocar texto sobreposto na tela reforçando a fala. O bloco de "0-3s" é o mais crítico: ele TEM que corresponder ao hook (gancho de entrada do vídeo), e a dica desse bloco deve reforçar como entregar esse gancho com energia (ex: "fale isso olhando direto pra câmera, sem enrolação, corte seco assim que terminar a frase").
 - Se o formato for LinkedIn: retorne 1 ou 2 blocos do tipo "Texto do post", indicando como estruturar o texto (parágrafos curtos, quebras de linha), sem precisar de vídeo.
 
 Seja direto e objetivo em cada campo de texto, instrucao e dica devem ter no máximo 1-2 frases curtas cada, para a resposta inteira caber dentro do limite de tamanho.
 
 Cada bloco do plano_postagem deve ter:
 - numero: a ordem (1, 2, 3...) ou a marcação de tempo no caso de Reels
-- tipo: exatamente um destes textos: "Legenda do post", "Vídeo falado", "Texto na tela" ou "Texto do post"
+- tipo: exatamente um destes textos: "Legenda do post", "Slide do carrossel", "Vídeo falado", "Texto na tela" ou "Texto do post"
 - instrucao: o que ela deve falar ou escrever especificamente nesse bloco (pode ser uma frase extraída do roteiro ou adaptada pra caber naquele pedaço)
 - dica: uma orientação prática rápida de atuação ou produção (ex: "olhe direto pra câmera e fale devagar", "deixe a frase na tela por uns 4 segundos antes de passar", "use a figurinha de enquete aqui")
 
@@ -967,7 +955,8 @@ function parseLinhaEditorialResponse(texto){
       dia: partes[0] || "",
       tipo: partes[1] || "",
       angulo: partes[2] || "",
-      gancho_curto: partes[3] || ""
+      gancho_curto: partes[3] || "",
+      formato_sugerido: partes[4] || "Post estático"
     };
   }).filter(item => item.dia && item.angulo);
 
@@ -1010,16 +999,17 @@ Cada item deve ter:
 - dia: dia da semana sugerido (ex: "Segunda-feira")
 - tipo: exatamente um destes textos: "Observação do dia a dia", "Case de cliente", "Reflexão direta", "Mito x verdade", "Bastidor rápido"
 - angulo: 1 frase curta e específica descrevendo o ângulo daquele dia dentro do tema central (isso vai virar o campo "tema" de um gerador de roteiro depois, então precisa ser claro e específico, não genérico)
-- gancho_curto: um exemplo curto de como esse post poderia abrir, seguindo o mesmo estilo humanizado (sem clichê de copy, sem travessão, sem fala relatada a menos que o tipo seja "Case de cliente")
+- gancho_curto: um exemplo curto de como esse post poderia abrir, seguindo o mesmo estilo humanizado (sem clichê de copy, sem travessão, sem fala relatada a menos que o tipo seja "Case de cliente"). Se formato_sugerido for "Reels", esse gancho precisa soar como algo falado em vídeo (frase curta, de impacto, dita olhando pra câmera), não como legenda de texto.
+- formato_sugerido: decida, com base no ângulo e no tipo daquele dia, qual formato funciona melhor: exatamente um destes textos: "Reels", "Post estático" ou "Carrossel". Use seu julgamento — por exemplo, "Case de cliente" e "Mito x verdade" costumam funcionar bem como Carrossel (uma ideia que se desenvolve em passos/slides); "Reflexão direta" e "Bastidor rápido" costumam funcionar bem como Reels (algo falado, com energia); "Observação do dia a dia" pode ser Post estático quando é uma ideia mais contida. Varie os formatos ao longo da semana, não repita o mesmo formato em todos os dias — normalmente uma boa semana tem pelo menos 1 Reels, 1 Carrossel e 1 Post estático espalhados nela.
 
 Seja direto, cada campo de texto deve ter no máximo 1-2 frases curtas.
 
 Responda EXATAMENTE nesse formato de texto simples, uma linha por item, sem markdown, sem explicações antes ou depois:
 
 ###ITEM###
-dia||tipo||angulo||gancho_curto
+dia||tipo||angulo||gancho_curto||formato_sugerido
 ###ITEM###
-dia||tipo||angulo||gancho_curto
+dia||tipo||angulo||gancho_curto||formato_sugerido
 (repita ###ITEM### para cada conteúdo pedido)
 ###FIM###
 
@@ -1095,19 +1085,24 @@ function renderLinhaEditorial(linha){
 
 function renderItemLinhaEditorial(item, idx){
   const pacote = pacotesDia[idx];
+  const formato = item.formato_sugerido || "Post estático";
+  const formatoClass = formato === "Reels" ? "video" : "texto";
   return `
     <div class="plano-item" style="align-items:flex-start;" id="linha-item-${idx}">
       <div class="plano-num mono">${idx + 1}</div>
       <div style="flex:1;">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
           <strong>${escapeHtml(item.dia || '')}</strong>
-          <span class="plano-badge texto">${escapeHtml(item.tipo || '')}</span>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <span class="plano-badge texto">${escapeHtml(item.tipo || '')}</span>
+            <span class="plano-badge ${formatoClass}">${escapeHtml(formato)}</span>
+          </div>
         </div>
         <div class="plano-instrucao">${escapeHtml(item.angulo || '')}</div>
         <div class="plano-dica" style="margin-bottom:10px;">"${escapeHtml(item.gancho_curto || '')}"</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <button class="btn-small primary" onclick="usarDiaNoGerador(${idx})">Usar esse dia no gerador</button>
-          <button class="btn-small" id="pacote-btn-${idx}" onclick="gerarPacoteDia(${idx})">${pacote ? 'Gerar pacote de novo' : `Gerar ${escapeHtml(formatoPacotePrincipal)} + Stories desse dia`}</button>
+          <button class="btn-small" id="pacote-btn-${idx}" onclick="gerarPacoteDia(${idx})">${pacote ? 'Gerar pacote de novo' : `Gerar ${escapeHtml(formato)} + Stories desse dia`}</button>
           ${pacote ? `<button class="btn-small" onclick="baixarPacoteDiaWord(${idx})">Baixar pacote em Word</button>` : ''}
         </div>
         ${pacote ? renderPacoteDiaHtml(pacote) : ''}
@@ -1137,11 +1132,13 @@ function renderMiniRoteiroHtml(rotulo, roteiro){
   `;
 }
 
-// Gera, num clique só, o conteúdo principal (Feed/Reels/LinkedIn) + os Stories daquele dia da linha editorial.
+// Gera, num clique só, o conteúdo principal (no formato que a própria IA sugeriu pra esse dia:
+// Reels, Post estático ou Carrossel) + os Stories daquele dia da linha editorial.
 async function gerarPacoteDia(idx){
   const item = linhaEditorialAtual[idx];
   if(!item) return;
 
+  const formato = item.formato_sugerido || "Post estático";
   const btn = document.getElementById(`pacote-btn-${idx}`);
   const nicho = document.getElementById('nicho').value.trim() || "negócio local";
   const tom = document.getElementById('tom').value;
@@ -1150,13 +1147,13 @@ async function gerarPacoteDia(idx){
 
   try{
     const [principal, stories] = await Promise.all([
-      chamarGeradorRoteiro({ nicho, tom, formato: formatoPacotePrincipal, tipo: item.tipo, tema: item.angulo, detalhe: "" }),
+      chamarGeradorRoteiro({ nicho, tom, formato, tipo: item.tipo, tema: item.angulo, detalhe: "" }),
       chamarGeradorRoteiro({ nicho, tom, formato: "Stories", tipo: item.tipo, tema: item.angulo, detalhe: "" })
     ]);
 
     pacotesDia[idx] = {
       principal, stories,
-      formatoPrincipal: formatoPacotePrincipal,
+      formatoPrincipal: formato,
       dia: item.dia,
       angulo: item.angulo
     };
@@ -1168,7 +1165,7 @@ async function gerarPacoteDia(idx){
   }catch(err){
     console.error(err);
     alert("Não foi possível gerar o pacote desse dia agora. Tente novamente em instantes.");
-    if(btn){ btn.disabled = false; btn.textContent = `Gerar ${formatoPacotePrincipal} + Stories desse dia`; }
+    if(btn){ btn.disabled = false; btn.textContent = `Gerar ${formato} + Stories desse dia`; }
   }
 }
 
@@ -1182,6 +1179,14 @@ function usarDiaNoGerador(idx){
     c.classList.toggle('active', c.dataset.tipo === item.tipo);
   });
   tipoSelecionado = item.tipo && document.querySelector(`#tipo-chips [data-tipo="${item.tipo}"]`) ? item.tipo : "IA decide";
+
+  const formato = item.formato_sugerido || "Post estático";
+  document.querySelectorAll('#formato-chips .chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.formato === formato);
+  });
+  if(document.querySelector(`#formato-chips [data-formato="${formato}"]`)){
+    formatoSelecionado = formato;
+  }
 
   document.getElementById('gerador').scrollIntoView({ behavior: 'smooth' });
 }
