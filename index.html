@@ -320,6 +320,7 @@
       <a href="#como-funciona">Como funciona</a>
       <a href="#precos">Preços</a>
       <a href="#biblioteca">Biblioteca</a>
+      <a href="#almoxarifado">Almoxarifado</a>
       <a class="btn-nav" href="#gerador">Testar grátis</a>
     </div>
   </div>
@@ -612,6 +613,19 @@
   </div>
 </section>
 
+<section id="almoxarifado">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-eyebrow">Sua conta</span>
+      <h2>Almoxarifado</h2>
+      <p>O que você guarda aqui é o que deu certo de verdade. A cada conteúdo salvo, a IA passa a usar ele como referência de estilo nas próximas gerações, pra ficar cada vez mais parecida com o que funciona pro seu negócio.</p>
+    </div>
+    <div id="almoxarifado-list">
+      <div class="library-empty" id="almox-empty">Nada guardado ainda. Na linha editorial, depois de gerar o conteúdo de um dia, clique em "Salvar na minha biblioteca" pra trazer ele pra cá.</div>
+    </div>
+  </div>
+</section>
+
 <section id="faq">
   <div class="wrap" style="max-width:760px;">
     <div class="section-head">
@@ -658,6 +672,10 @@ let linhaEditorialAtual = [];
 let plataformaSelecionada = "Instagram";
 let plataformaLinhaAtual = "Instagram"; // plataforma da última linha editorial gerada
 let pacotesDia = {}; // idx do dia -> { principal, stories, formatoPrincipal, dia, angulo }
+let almoxarifado = []; // conteúdos salvos porque "funcionaram" — usados como referência de estilo pra IA
+let modelosGerados = {}; // id do item do almoxarifado -> roteiro gerado a partir dele ("modelo parecido")
+
+carregarAlmoxarifado();
 
 document.querySelectorAll('#tipo-chips .chip').forEach(chip => {
   chip.addEventListener('click', () => {
@@ -806,7 +824,7 @@ function parseRoteiroResponse(texto){
 
 // chamarGeradorRoteiro faz a chamada à IA e devolve o roteiro pronto (sem mexer na tela).
 // É usada tanto pelo botão principal do gerador quanto pelo "pacote do dia" da linha editorial.
-async function chamarGeradorRoteiro({ nicho, tom, formato, tipo, tema, detalhe }){
+async function chamarGeradorRoteiro({ nicho, tom, formato, tipo, tema, detalhe, inspiracao }){
   const systemPrompt = `Você é uma ghostwriter especializada em Stories e conteúdo de redes sociais extremamente humanizado — do tipo que faz quem assiste sentir "nossa, é exatamente isso que eu vivo, ela me entende", não um copywriter de fórmula de vendas. Você escreve para mentoras/profissionais que constroem comunidade de verdade com a própria audiência (as clientes em potencial), não funil de conversão.
 
 REGRA CENTRAL: o centro emocional do post é sempre a realidade de quem está assistindo, a cliente em potencial, NUNCA a trajetória pessoal da profissional. A profissional pode aparecer como quem observa, testemunha ou reflete sobre isso, mas o post não é sobre a jornada dela.
@@ -871,7 +889,12 @@ Não use o caractere # em nenhum outro lugar do texto além dessas marcações. 
     ? `\n\nBRIEFING COMPLETO DA MARCA (fonte de verdade principal — use isso para entender quem é essa pessoa, o que ela entrega, vende e transforma na vida das pessoas):\n${perfilMarca.texto}`
     : "";
 
-  const userPrompt = `Nicho: ${nicho}\nTom de voz: ${tom}\nFormato: ${formato}\nTipo de conteúdo (TIPO_DE_CONTEUDO): ${tipo}\nTema ou assunto do dia: ${tema}${detalhe ? `\nDetalhe real disponível: ${detalhe}` : ""}${perfilContext}`;
+  // Se veio uma inspiração explícita (botão "Gerar um modelo parecido"), ela manda mais forte que as referências gerais.
+  const inspiracaoContext = inspiracao
+    ? `\n\nEXEMPLO QUE FUNCIONOU MUITO BEM COM ESSE PÚBLICO (a pessoa salvou esse conteúdo porque fez muito sentido pro negócio dela). Escreva um conteúdo NOVO com o mesmo estilo, tom e abordagem desse exemplo, mas com palavras diferentes, sem repetir frases dele:\n${inspiracao}`
+    : construirContextoAlmoxarifado();
+
+  const userPrompt = `Nicho: ${nicho}\nTom de voz: ${tom}\nFormato: ${formato}\nTipo de conteúdo (TIPO_DE_CONTEUDO): ${tipo}\nTema ou assunto do dia: ${tema}${detalhe ? `\nDetalhe real disponível: ${detalhe}` : ""}${perfilContext}${inspiracaoContext}`;
 
   const response = await fetch("/api/generate", {
     method: "POST",
@@ -1161,6 +1184,7 @@ function renderItemLinhaEditorial(item, idx){
           <button class="btn-small primary" onclick="usarDiaNoGerador(${idx})">Usar esse dia no gerador</button>
           <button class="btn-small" id="pacote-btn-${idx}" onclick="gerarPacoteDia(${idx})">${pacote ? 'Gerar de novo' : escapeHtml(rotuloBotao)}</button>
           ${pacote ? `<button class="btn-small" onclick="baixarPacoteDiaWord(${idx})">Baixar em Word</button>` : ''}
+          ${pacote ? `<button class="btn-small" onclick="salvarNoAlmoxarifado(${idx})">Salvar na minha biblioteca</button>` : ''}
         </div>
         ${pacote ? renderPacoteDiaHtml(pacote) : ''}
       </div>
@@ -1318,6 +1342,175 @@ function renderBiblioteca(){
       <div class="lib-preview">${escapeHtml(item.hook)}</div>
     </div>
   `).join('');
+}
+
+/* ===== Almoxarifado (conteúdos salvos que "deram certo") ===== */
+// Fica guardado no navegador (localStorage), então continua aqui mesmo se a página for fechada e reaberta.
+
+function carregarAlmoxarifado(){
+  try{
+    const salvo = localStorage.getItem('almoxarifado_v1');
+    almoxarifado = salvo ? JSON.parse(salvo) : [];
+  }catch(err){
+    console.error('Não foi possível carregar o almoxarifado salvo.', err);
+    almoxarifado = [];
+  }
+  renderAlmoxarifado();
+}
+
+function salvarAlmoxarifadoStorage(){
+  try{
+    localStorage.setItem('almoxarifado_v1', JSON.stringify(almoxarifado));
+  }catch(err){
+    console.error('Não foi possível salvar o almoxarifado.', err);
+  }
+}
+
+// Monta um trecho de referência com os conteúdos mais recentes do almoxarifado, pra IA usar
+// como exemplo de estilo em toda geração nova (isso é o "aprendizado": referência no prompt,
+// não é um treinamento novo do modelo).
+function construirContextoAlmoxarifado(){
+  if(!Array.isArray(almoxarifado) || almoxarifado.length === 0) return "";
+  const recentes = almoxarifado.slice(0, 2);
+  const blocos = recentes.map(item => {
+    const texto = [item.principal?.hook, item.principal?.storytelling].filter(Boolean).join(' ');
+    return texto ? `- (${item.formatoPrincipal || 'conteúdo'}) ${texto}` : '';
+  }).filter(Boolean);
+  if(blocos.length === 0) return "";
+  return `\n\nCONTEÚDOS QUE JÁ FUNCIONARAM MUITO BEM COM ESSE PÚBLICO (a pessoa salvou esses porque fizeram muito sentido pro negócio dela). Use como referência de tom, estilo e abordagem, mas NÃO copie nem repita esses textos, escreva algo novo:\n${blocos.join('\n')}`;
+}
+
+// Salva o pacote de um dia da linha editorial (feed/reels/carrossel + stories) no Almoxarifado.
+function salvarNoAlmoxarifado(idx){
+  const item = linhaEditorialAtual[idx];
+  const pacote = pacotesDia[idx];
+  if(!item || !pacote) return;
+
+  almoxarifado.unshift({
+    id: 'almox-' + Date.now(),
+    dia: item.dia,
+    tipo: item.tipo,
+    angulo: item.angulo,
+    formatoPrincipal: pacote.formatoPrincipal,
+    principal: pacote.principal,
+    stories: pacote.stories,
+    salvoEm: new Date().toISOString()
+  });
+
+  salvarAlmoxarifadoStorage();
+  renderAlmoxarifado();
+  document.getElementById('almoxarifado').scrollIntoView({behavior:'smooth'});
+}
+
+function removerDoAlmoxarifado(id){
+  almoxarifado = almoxarifado.filter(item => item.id !== id);
+  delete modelosGerados[id];
+  salvarAlmoxarifadoStorage();
+  renderAlmoxarifado();
+}
+
+function renderAlmoxarifado(){
+  const list = document.getElementById('almoxarifado-list');
+  if(!list) return;
+
+  if(!Array.isArray(almoxarifado) || almoxarifado.length === 0){
+    list.innerHTML = '<div class="library-empty" id="almox-empty">Nada guardado ainda. Na linha editorial, depois de gerar o conteúdo de um dia, clique em "Salvar na minha biblioteca" pra trazer ele pra cá.</div>';
+    return;
+  }
+
+  list.innerHTML = almoxarifado.map(item => renderItemAlmoxarifado(item)).join('');
+}
+
+function renderItemAlmoxarifado(item){
+  const modelo = modelosGerados[item.id];
+  return `
+    <div class="lib-item" id="almox-item-${item.id}">
+      <div class="lib-item-head">
+        <span class="lib-theme">${escapeHtml(item.dia || '')} — ${escapeHtml(item.angulo || '')}</span>
+        <span class="lib-tag mono">${escapeHtml(item.formatoPrincipal || '')}</span>
+      </div>
+      <div class="lib-preview">${escapeHtml(item.principal?.hook || '')}</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
+        <button class="btn-small primary" id="almox-btn-${item.id}" onclick="gerarModeloParecido('${item.id}')">${modelo ? 'Gerar outro parecido' : 'Gerar um modelo parecido'}</button>
+        <button class="btn-small" onclick="baixarAlmoxarifadoItemWord('${item.id}')">Baixar em Word</button>
+        <button class="btn-small" onclick="removerDoAlmoxarifado('${item.id}')">Remover</button>
+      </div>
+      ${modelo ? `
+        <div style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--line-strong);">
+          <div class="plano-badge texto" style="margin-bottom:8px;">Modelo parecido gerado</div>
+          ${renderMiniRoteiroHtml(modelo.formato, modelo)}
+          <div style="margin-top:10px;">
+            <button class="btn-small" onclick="baixarModeloParecidoWord('${item.id}')">Baixar esse modelo em Word</button>
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+// Gera um novo conteúdo inspirado no item salvo: mesmo tema/ângulo e formato, mas com o texto
+// original como referência de estilo pra IA escrever algo parecido, com palavras diferentes.
+async function gerarModeloParecido(id){
+  const item = almoxarifado.find(a => a.id === id);
+  if(!item) return;
+
+  const btn = document.getElementById(`almox-btn-${id}`);
+  const nicho = document.getElementById('nicho').value.trim() || "negócio local";
+  const tom = document.getElementById('tom').value;
+
+  const inspiracao = [item.principal?.hook, item.principal?.storytelling, item.principal?.cta].filter(Boolean).join('\n');
+
+  if(btn){ btn.disabled = true; btn.textContent = "Gerando..."; }
+
+  try{
+    const modelo = await chamarGeradorRoteiro({
+      nicho, tom,
+      formato: item.formatoPrincipal,
+      tipo: item.tipo,
+      tema: item.angulo,
+      detalhe: "",
+      inspiracao
+    });
+
+    modelosGerados[id] = modelo;
+
+    const container = document.getElementById(`almox-item-${id}`);
+    if(container){
+      container.outerHTML = renderItemAlmoxarifado(item);
+    }
+  }catch(err){
+    console.error(err);
+    alert("Não foi possível gerar o modelo parecido agora. Tente novamente em instantes.");
+    if(btn){ btn.disabled = false; btn.textContent = "Gerar um modelo parecido"; }
+  }
+}
+
+// Baixa em Word o conteúdo original salvo no almoxarifado (feed/reels/carrossel + stories).
+function baixarAlmoxarifadoItemWord(id){
+  const item = almoxarifado.find(a => a.id === id);
+  if(!item) return;
+
+  let html = `<h1>${escapeHtml(item.dia || '')}</h1>`;
+  html += blocoAberturaDocumento();
+  html += `<div class="item"><span class="rotulo">Tema: </span>${escapeHtml(item.angulo || '')}</div>`;
+  html += roteiroParaHtmlBloco(item.formatoPrincipal, item.principal);
+  if(item.stories){
+    html += roteiroParaHtmlBloco('Stories', item.stories);
+  }
+  baixarComoWord(item.dia || 'conteudo-salvo', item.dia || 'Conteúdo salvo', html);
+}
+
+// Baixa em Word o "modelo parecido" gerado a partir de um item salvo.
+function baixarModeloParecidoWord(id){
+  const modelo = modelosGerados[id];
+  const item = almoxarifado.find(a => a.id === id);
+  if(!modelo || !item) return;
+
+  const titulo = `Modelo parecido - ${item.dia || ''}`;
+  let html = `<h1>${escapeHtml(titulo)}</h1>`;
+  html += blocoAberturaDocumento();
+  html += roteiroParaHtmlBloco(modelo.formato, modelo);
+  baixarComoWord(titulo, titulo, html);
 }
 
 function escapeHtml(str){
