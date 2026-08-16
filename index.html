@@ -475,7 +475,13 @@
         </div>
       </div>
 
-      <p style="font-size:0.86rem;color:rgba(22,36,31,0.6);margin-top:14px;margin-bottom:0;">A IA já decide, dia a dia, se faz mais sentido ser Reels, post estático ou carrossel — e sempre inclui os Stories do dia junto.</p>
+      <label style="margin-top:14px;">Plataforma</label>
+      <div class="chip-row" id="plataforma-chips">
+        <button type="button" class="chip active" data-plataforma="Instagram">Instagram</button>
+        <button type="button" class="chip" data-plataforma="LinkedIn">LinkedIn</button>
+      </div>
+
+      <p id="plataforma-hint" style="font-size:0.86rem;color:rgba(22,36,31,0.6);margin-top:10px;margin-bottom:0;">No Instagram, a IA já decide dia a dia se faz mais sentido ser Reels, carrossel ou post estático, e sempre inclui os Stories do dia junto.</p>
 
       <button class="gen-btn" style="background:var(--petrol);" id="linha-btn" onclick="gerarLinhaEditorial()">
         <span id="linha-label">Gerar linha editorial da semana</span>
@@ -649,6 +655,8 @@ let ultimoRoteiro = null;
 let biblioteca = [];
 let perfilMarca = { texto: "" };
 let linhaEditorialAtual = [];
+let plataformaSelecionada = "Instagram";
+let plataformaLinhaAtual = "Instagram"; // plataforma da última linha editorial gerada
 let pacotesDia = {}; // idx do dia -> { principal, stories, formatoPrincipal, dia, angulo }
 
 document.querySelectorAll('#tipo-chips .chip').forEach(chip => {
@@ -736,6 +744,18 @@ document.querySelectorAll('#formato-chips .chip').forEach(chip => {
     document.querySelectorAll('#formato-chips .chip').forEach(c => c.classList.remove('active'));
     chip.classList.add('active');
     formatoSelecionado = chip.dataset.formato;
+  });
+});
+
+document.querySelectorAll('#plataforma-chips .chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#plataforma-chips .chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    plataformaSelecionada = chip.dataset.plataforma;
+    const hint = document.getElementById('plataforma-hint');
+    hint.textContent = plataformaSelecionada === "Instagram"
+      ? "No Instagram, a IA já decide dia a dia se faz mais sentido ser Reels, carrossel ou post estático, e sempre inclui os Stories do dia junto."
+      : "No LinkedIn o conteúdo é só um post de feed (texto), sem Reels, carrossel ou Stories.";
   });
 });
 
@@ -986,21 +1006,51 @@ async function gerarLinhaEditorial(){
   btn.disabled = true;
   label.innerHTML = '<span class="spinner"></span> Planejando semana...';
 
-  const systemPrompt = `Você é uma estrategista de conteúdo que planeja a semana de postagens de uma profissional, criando uma linha editorial coesa: os posts se conectam por um fio condutor comum (o tema central da semana), mas cada um aborda um ângulo diferente, pra não ficar repetitivo nem soar como posts soltos sem nenhuma conexão entre si.
-
-Gere a quantidade de ideias pedida, cada uma com um ângulo diferente sobre o mesmo fio condutor. VARIE A ESTRUTURA entre elas, não deixe todas no formato de "contar um caso de cliente relatado" (do tipo "ela me ligou", "ela me disse", "ela me contou"). Distribua entre estas 5 estruturas ao longo da semana, sem repetir a mesma estrutura em dias seguidos quando possível:
-- "Observação do dia a dia": uma cena leve e reconhecível da rotina do público, um padrão ou hábito comum, sem precisar ser uma anedota formal.
+  const estruturas = `- "Observação do dia a dia": uma cena leve e reconhecível da rotina do público, um padrão ou hábito comum, sem precisar ser uma anedota formal.
 - "Case de cliente": o caso real de UMA cliente (use no máximo 1 ou 2 do total, nunca mais que isso).
 - "Reflexão direta": um pensamento em voz alta, opinião ou provocação sobre o dia a dia do público.
 - "Mito x verdade": desmontar uma crença comum do público de forma leve.
-- "Bastidor rápido": um flagra leve e real da rotina da profissional, sem drama.
+- "Bastidor rápido": um flagra leve e real da rotina da profissional, sem drama.`;
+
+  let systemPrompt;
+  let outputFormato;
+
+  if(plataformaSelecionada === "LinkedIn"){
+    systemPrompt = `Você é uma estrategista de conteúdo que planeja a semana de posts de LinkedIn de uma profissional, criando uma linha editorial coesa: os posts se conectam por um fio condutor comum (o tema central da semana), mas cada um aborda um ângulo diferente, pra não ficar repetitivo nem soar como posts soltos sem nenhuma conexão entre si. No LinkedIn cada dia é só 1 post de feed (texto), sem Reels, sem carrossel, sem Stories.
+
+Gere a quantidade de ideias pedida, cada uma com um ângulo diferente sobre o mesmo fio condutor. VARIE A ESTRUTURA entre elas, não deixe todas no formato de "contar um caso de cliente relatado" (do tipo "ela me ligou", "ela me disse", "ela me contou"). Distribua entre estas 5 estruturas ao longo da semana, sem repetir a mesma estrutura em dias seguidos quando possível:
+${estruturas}
+
+Cada item deve ter:
+- dia: dia da semana sugerido (ex: "Segunda-feira")
+- tipo: exatamente um destes textos: "Observação do dia a dia", "Case de cliente", "Reflexão direta", "Mito x verdade", "Bastidor rápido"
+- angulo: 1 frase curta e específica descrevendo o ângulo daquele dia dentro do tema central (isso vai virar o campo "tema" de um gerador de roteiro depois, então precisa ser claro e específico, não genérico)
+- gancho_curto: um exemplo curto de como esse post poderia abrir, seguindo o mesmo estilo humanizado mas com o tom mais estruturado do LinkedIn (sem clichê de copy, sem travessão, sem fala relatada a menos que o tipo seja "Case de cliente")
+
+Seja direto, cada campo de texto deve ter no máximo 1-2 frases curtas.
+
+Responda EXATAMENTE nesse formato de texto simples, uma linha por item, sem markdown, sem explicações antes ou depois:
+
+###ITEM###
+dia||tipo||angulo||gancho_curto
+###ITEM###
+dia||tipo||angulo||gancho_curto
+(repita ###ITEM### para cada conteúdo pedido)
+###FIM###
+
+Não use o caractere # nem || em nenhum outro lugar do texto além dessas marcações.`;
+  } else {
+    systemPrompt = `Você é uma estrategista de conteúdo que planeja a semana de postagens de Instagram de uma profissional, criando uma linha editorial coesa: os posts se conectam por um fio condutor comum (o tema central da semana), mas cada um aborda um ângulo diferente, pra não ficar repetitivo nem soar como posts soltos sem nenhuma conexão entre si.
+
+Gere a quantidade de ideias pedida, cada uma com um ângulo diferente sobre o mesmo fio condutor. VARIE A ESTRUTURA entre elas, não deixe todas no formato de "contar um caso de cliente relatado" (do tipo "ela me ligou", "ela me disse", "ela me contou"). Distribua entre estas 5 estruturas ao longo da semana, sem repetir a mesma estrutura em dias seguidos quando possível:
+${estruturas}
 
 Cada item deve ter:
 - dia: dia da semana sugerido (ex: "Segunda-feira")
 - tipo: exatamente um destes textos: "Observação do dia a dia", "Case de cliente", "Reflexão direta", "Mito x verdade", "Bastidor rápido"
 - angulo: 1 frase curta e específica descrevendo o ângulo daquele dia dentro do tema central (isso vai virar o campo "tema" de um gerador de roteiro depois, então precisa ser claro e específico, não genérico)
 - gancho_curto: um exemplo curto de como esse post poderia abrir, seguindo o mesmo estilo humanizado (sem clichê de copy, sem travessão, sem fala relatada a menos que o tipo seja "Case de cliente"). Se formato_sugerido for "Reels", esse gancho precisa soar como algo falado em vídeo (frase curta, de impacto, dita olhando pra câmera), não como legenda de texto.
-- formato_sugerido: decida, com base no ângulo e no tipo daquele dia, qual formato funciona melhor: exatamente um destes textos: "Reels", "Post estático" ou "Carrossel". Use seu julgamento — por exemplo, "Case de cliente" e "Mito x verdade" costumam funcionar bem como Carrossel (uma ideia que se desenvolve em passos/slides); "Reflexão direta" e "Bastidor rápido" costumam funcionar bem como Reels (algo falado, com energia); "Observação do dia a dia" pode ser Post estático quando é uma ideia mais contida. Varie os formatos ao longo da semana, não repita o mesmo formato em todos os dias — normalmente uma boa semana tem pelo menos 1 Reels, 1 Carrossel e 1 Post estático espalhados nela.
+- formato_sugerido: decida, com base no ângulo e no tipo daquele dia, qual formato funciona melhor: exatamente um destes textos: "Reels", "Post estático" ou "Carrossel". Use seu julgamento — por exemplo, "Case de cliente" e "Mito x verdade" costumam funcionar bem como Carrossel (uma ideia que se desenvolve em passos/slides); "Reflexão direta" e "Bastidor rápido" costumam funcionar bem como Reels (algo falado, com energia); "Observação do dia a dia" pode ser Post estático quando é uma ideia mais contida. IMPORTANTE — siga essa proporção ao distribuir os formatos na semana: Reels e Carrossel devem ser maioria (cada um perto de 40% dos dias) e Post estático deve ser minoria (perto de 20% dos dias). Como referência, numa semana de 5 conteúdos isso dá algo em torno de 2 Reels, 2 Carrosséis e 1 Post estático — ajuste a proporção pra quantidades diferentes mantendo essa mesma lógica, e não repita o mesmo formato em dias seguidos quando possível.
 
 Seja direto, cada campo de texto deve ter no máximo 1-2 frases curtas.
 
@@ -1014,6 +1064,7 @@ dia||tipo||angulo||gancho_curto||formato_sugerido
 ###FIM###
 
 Não use o caractere # nem || em nenhum outro lugar do texto além dessas marcações.`;
+  }
 
   const userPrompt = `Fio condutor da semana: ${temaSemana}\nNicho: ${nicho}\nQuantidade de conteúdos: ${qtd}${perfilMarca.texto ? `\n\nBRIEFING COMPLETO DA MARCA:\n${perfilMarca.texto}` : ""}`;
 
@@ -1050,8 +1101,12 @@ Não use o caractere # nem || em nenhum outro lugar do texto além dessas marca�
     linha.forEach(item => {
       item.angulo = removerTravessoes(item.angulo);
       item.gancho_curto = removerTravessoes(item.gancho_curto);
+      if(plataformaSelecionada === "LinkedIn"){
+        item.formato_sugerido = "LinkedIn";
+      }
     });
 
+    plataformaLinhaAtual = plataformaSelecionada;
     renderLinhaEditorial(linha);
 
   }catch(err){
@@ -1087,6 +1142,8 @@ function renderItemLinhaEditorial(item, idx){
   const pacote = pacotesDia[idx];
   const formato = item.formato_sugerido || "Post estático";
   const formatoClass = formato === "Reels" ? "video" : "texto";
+  const temStories = plataformaLinhaAtual !== "LinkedIn";
+  const rotuloBotao = temStories ? `Gerar ${formato} + Stories desse dia` : `Gerar post de ${formato} desse dia`;
   return `
     <div class="plano-item" style="align-items:flex-start;" id="linha-item-${idx}">
       <div class="plano-num mono">${idx + 1}</div>
@@ -1102,8 +1159,8 @@ function renderItemLinhaEditorial(item, idx){
         <div class="plano-dica" style="margin-bottom:10px;">"${escapeHtml(item.gancho_curto || '')}"</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <button class="btn-small primary" onclick="usarDiaNoGerador(${idx})">Usar esse dia no gerador</button>
-          <button class="btn-small" id="pacote-btn-${idx}" onclick="gerarPacoteDia(${idx})">${pacote ? 'Gerar pacote de novo' : `Gerar ${escapeHtml(formato)} + Stories desse dia`}</button>
-          ${pacote ? `<button class="btn-small" onclick="baixarPacoteDiaWord(${idx})">Baixar pacote em Word</button>` : ''}
+          <button class="btn-small" id="pacote-btn-${idx}" onclick="gerarPacoteDia(${idx})">${pacote ? 'Gerar de novo' : escapeHtml(rotuloBotao)}</button>
+          ${pacote ? `<button class="btn-small" onclick="baixarPacoteDiaWord(${idx})">Baixar em Word</button>` : ''}
         </div>
         ${pacote ? renderPacoteDiaHtml(pacote) : ''}
       </div>
@@ -1115,7 +1172,7 @@ function renderPacoteDiaHtml(pacote){
   return `
     <div style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--line-strong);display:grid;gap:12px;">
       ${renderMiniRoteiroHtml(pacote.formatoPrincipal, pacote.principal)}
-      ${renderMiniRoteiroHtml('Stories', pacote.stories)}
+      ${pacote.stories ? renderMiniRoteiroHtml('Stories', pacote.stories) : ''}
     </div>
   `;
 }
@@ -1133,12 +1190,14 @@ function renderMiniRoteiroHtml(rotulo, roteiro){
 }
 
 // Gera, num clique só, o conteúdo principal (no formato que a própria IA sugeriu pra esse dia:
-// Reels, Post estático ou Carrossel) + os Stories daquele dia da linha editorial.
+// Reels, Post estático ou Carrossel no Instagram; post de texto no LinkedIn) + os Stories daquele dia
+// (só quando a plataforma for Instagram — LinkedIn não tem Stories).
 async function gerarPacoteDia(idx){
   const item = linhaEditorialAtual[idx];
   if(!item) return;
 
   const formato = item.formato_sugerido || "Post estático";
+  const temStories = plataformaLinhaAtual !== "LinkedIn";
   const btn = document.getElementById(`pacote-btn-${idx}`);
   const nicho = document.getElementById('nicho').value.trim() || "negócio local";
   const tom = document.getElementById('tom').value;
@@ -1146,13 +1205,15 @@ async function gerarPacoteDia(idx){
   if(btn){ btn.disabled = true; btn.textContent = "Gerando..."; }
 
   try{
-    const [principal, stories] = await Promise.all([
-      chamarGeradorRoteiro({ nicho, tom, formato, tipo: item.tipo, tema: item.angulo, detalhe: "" }),
-      chamarGeradorRoteiro({ nicho, tom, formato: "Stories", tipo: item.tipo, tema: item.angulo, detalhe: "" })
-    ]);
+    const chamadas = [ chamarGeradorRoteiro({ nicho, tom, formato, tipo: item.tipo, tema: item.angulo, detalhe: "" }) ];
+    if(temStories){
+      chamadas.push(chamarGeradorRoteiro({ nicho, tom, formato: "Stories", tipo: item.tipo, tema: item.angulo, detalhe: "" }));
+    }
+    const [principal, stories] = await Promise.all(chamadas);
 
     pacotesDia[idx] = {
-      principal, stories,
+      principal,
+      stories: temStories ? stories : null,
       formatoPrincipal: formato,
       dia: item.dia,
       angulo: item.angulo
@@ -1165,7 +1226,10 @@ async function gerarPacoteDia(idx){
   }catch(err){
     console.error(err);
     alert("Não foi possível gerar o pacote desse dia agora. Tente novamente em instantes.");
-    if(btn){ btn.disabled = false; btn.textContent = `Gerar ${formato} + Stories desse dia`; }
+    if(btn){
+      btn.disabled = false;
+      btn.textContent = temStories ? `Gerar ${formato} + Stories desse dia` : `Gerar post de ${formato} desse dia`;
+    }
   }
 }
 
@@ -1319,38 +1383,38 @@ function baixarRoteiroAtualWord(){
   baixarComoWord(titulo, titulo, html);
 }
 
-// Baixa em Word a linha editorial da semana inteira, incluindo os pacotes do dia já gerados.
+// Baixa em Word a visão geral do planejamento da semana (dia, formato, ângulo e gancho de cada dia).
 function baixarLinhaEditorialWord(){
   if(!Array.isArray(linhaEditorialAtual) || linhaEditorialAtual.length === 0){
     alert("Gere a linha editorial da semana primeiro.");
     return;
   }
   let html = `<h1>Linha editorial da semana</h1>`;
-  linhaEditorialAtual.forEach((item, idx) => {
-    html += `<h2>${escapeHtml(item.dia || '')} — ${escapeHtml(item.tipo || '')}</h2>`;
+  html += `<div class="item"><span class="rotulo">Plataforma: </span>${escapeHtml(plataformaLinhaAtual)}</div>`;
+  linhaEditorialAtual.forEach((item) => {
+    const formato = item.formato_sugerido || "";
+    html += `<h2>${escapeHtml(item.dia || '')}${formato ? ' — ' + escapeHtml(formato) : ''}</h2>`;
+    html += `<div class="item"><span class="rotulo">Tipo: </span>${escapeHtml(item.tipo || '')}</div>`;
     html += `<div class="item"><span class="rotulo">Ângulo: </span>${escapeHtml(item.angulo || '')}</div>`;
     html += `<div class="item"><span class="rotulo">Gancho: </span>"${escapeHtml(item.gancho_curto || '')}"</div>`;
-    const pacote = pacotesDia[idx];
-    if(pacote){
-      html += roteiroParaHtmlBloco(pacote.formatoPrincipal, pacote.principal);
-      html += roteiroParaHtmlBloco('Stories', pacote.stories);
-    }
     html += `<hr/>`;
   });
   baixarComoWord('linha-editorial-da-semana', 'Linha editorial da semana', html);
 }
 
-// Baixa em Word só o pacote de um dia específico (conteúdo principal + stories).
+// Baixa em Word só o pacote de um dia específico (conteúdo principal + stories, quando existirem).
 function baixarPacoteDiaWord(idx){
   const pacote = pacotesDia[idx];
   if(!pacote){
-    alert("Gere o pacote desse dia primeiro.");
+    alert("Gere o conteúdo desse dia primeiro.");
     return;
   }
   const titulo = `${pacote.dia} - ${pacote.angulo}`;
   let html = `<h1>${escapeHtml(titulo)}</h1>`;
   html += roteiroParaHtmlBloco(pacote.formatoPrincipal, pacote.principal);
-  html += roteiroParaHtmlBloco('Stories', pacote.stories);
+  if(pacote.stories){
+    html += roteiroParaHtmlBloco('Stories', pacote.stories);
+  }
   baixarComoWord(titulo, titulo, html);
 }
 </script>
