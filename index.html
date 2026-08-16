@@ -1334,11 +1334,14 @@ function baixarComoWord(nomeArquivo, tituloDocumento, corpoHtml){
   <head><meta charset='utf-8'><title>${escapeHtml(tituloDocumento)}</title>
   <style>
     body{font-family:Calibri, Arial, sans-serif; font-size:11pt; color:#16241F;}
-    h1{font-size:18pt;margin-bottom:4pt;}
-    h2{font-size:14pt;margin-top:18pt;margin-bottom:4pt;color:#1B3A3A;}
+    h1{font-size:18pt;margin-bottom:4pt;font-weight:bold;}
+    h2{font-size:14pt;margin-top:18pt;margin-bottom:4pt;color:#1B3A3A;font-weight:bold;}
     h3{font-size:12pt;margin-top:12pt;margin-bottom:2pt;}
     .rotulo{font-weight:bold;}
     .item{margin-bottom:8pt;}
+    .abertura{font-style:italic;margin-bottom:4pt;}
+    .assinatura{font-weight:bold;margin-bottom:16pt;}
+    p{margin:0 0 10pt 0;}
     hr{border:none;border-top:1px solid #ccc;margin:16pt 0;}
   </style>
   </head><body>`;
@@ -1355,19 +1358,34 @@ function baixarComoWord(nomeArquivo, tituloDocumento, corpoHtml){
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-// Monta o bloco de HTML de um roteiro (hook, storytelling, cta e plano de postagem) pra usar dentro do Word.
+// Mensagem de abertura + assinatura que entram no topo de todo documento Word gerado.
+function blocoAberturaDocumento(){
+  return `
+    <p class="abertura">Esse material foi feito com muito amor e carinho por mim, pra você. Use com responsabilidade, pois aqui está a fórmula do seu sucesso!</p>
+    <p class="assinatura">Produzido por Andressa Galvan!</p>
+    <hr/>
+  `;
+}
+
+// Monta o conteúdo pronto de um roteiro (sem plano de postagem, sem rótulos técnicos):
+// pros formatos normais, hook + storytelling + cta viram parágrafos corridos.
+// Pros Stories, cada bloco do plano vira um parágrafo separado, na ordem certa,
+// pra ela saber exatamente como dividir aquilo entre os stories, sem instrução nenhuma junto.
+function conteudoParaParagrafos(roteiro){
+  let partes;
+  if(roteiro.formato === "Stories" && Array.isArray(roteiro.plano_postagem) && roteiro.plano_postagem.length){
+    partes = roteiro.plano_postagem.map(p => p.instrucao || '').filter(Boolean);
+  } else {
+    partes = [roteiro.hook, roteiro.storytelling, roteiro.cta].filter(Boolean);
+  }
+  return partes.map(p => `<p>${escapeHtml(p)}</p>`).join('');
+}
+
+// Monta o bloco de HTML de um roteiro (só o conteúdo pronto, sem plano de postagem) pra usar dentro do Word.
 function roteiroParaHtmlBloco(rotulo, roteiro){
   if(!roteiro) return '';
   let html = `<h2>${escapeHtml(rotulo)}</h2>`;
-  html += `<div class="item"><span class="rotulo">Hook: </span>${escapeHtml(roteiro.hook || '')}</div>`;
-  html += `<div class="item"><span class="rotulo">Storytelling: </span>${escapeHtml(roteiro.storytelling || '')}</div>`;
-  html += `<div class="item"><span class="rotulo">CTA: </span>${escapeHtml(roteiro.cta || '')}</div>`;
-  if(Array.isArray(roteiro.plano_postagem) && roteiro.plano_postagem.length){
-    html += `<h3>Plano de postagem</h3>`;
-    roteiro.plano_postagem.forEach(p => {
-      html += `<div class="item">${escapeHtml(String(p.numero ?? ''))}. [${escapeHtml(p.tipo || '')}] ${escapeHtml(p.instrucao || '')}${p.dica ? ' — ' + escapeHtml(p.dica) : ''}</div>`;
-    });
-  }
+  html += conteudoParaParagrafos(roteiro);
   return html;
 }
 
@@ -1379,6 +1397,7 @@ function baixarRoteiroAtualWord(){
   }
   const titulo = `Roteiro - ${ultimoRoteiro.formato} - ${ultimoRoteiro.tema}`;
   let html = `<h1>${escapeHtml(titulo)}</h1>`;
+  html += blocoAberturaDocumento();
   html += roteiroParaHtmlBloco(ultimoRoteiro.formato, ultimoRoteiro);
   baixarComoWord(titulo, titulo, html);
 }
@@ -1390,10 +1409,14 @@ function baixarLinhaEditorialWord(){
     return;
   }
   let html = `<h1>Linha editorial da semana</h1>`;
+  html += blocoAberturaDocumento();
   html += `<div class="item"><span class="rotulo">Plataforma: </span>${escapeHtml(plataformaLinhaAtual)}</div>`;
   linhaEditorialAtual.forEach((item) => {
     const formato = item.formato_sugerido || "";
-    html += `<h2>${escapeHtml(item.dia || '')}${formato ? ' — ' + escapeHtml(formato) : ''}</h2>`;
+    html += `<h2>${escapeHtml(item.dia || '')}</h2>`;
+    if(formato){
+      html += `<div class="item"><span class="rotulo">Formato: </span>${escapeHtml(formato)}</div>`;
+    }
     html += `<div class="item"><span class="rotulo">Tipo: </span>${escapeHtml(item.tipo || '')}</div>`;
     html += `<div class="item"><span class="rotulo">Ângulo: </span>${escapeHtml(item.angulo || '')}</div>`;
     html += `<div class="item"><span class="rotulo">Gancho: </span>"${escapeHtml(item.gancho_curto || '')}"</div>`;
@@ -1402,20 +1425,21 @@ function baixarLinhaEditorialWord(){
   baixarComoWord('linha-editorial-da-semana', 'Linha editorial da semana', html);
 }
 
-// Baixa em Word só o pacote de um dia específico (conteúdo principal + stories, quando existirem).
+// Baixa em Word só o conteúdo pronto de um dia específico (feed/reels/carrossel/linkedin + stories, quando existirem).
 function baixarPacoteDiaWord(idx){
   const pacote = pacotesDia[idx];
   if(!pacote){
     alert("Gere o conteúdo desse dia primeiro.");
     return;
   }
-  const titulo = `${pacote.dia} - ${pacote.angulo}`;
-  let html = `<h1>${escapeHtml(titulo)}</h1>`;
+  let html = `<h1>${escapeHtml(pacote.dia || '')}</h1>`;
+  html += blocoAberturaDocumento();
+  html += `<div class="item"><span class="rotulo">Tema do dia: </span>${escapeHtml(pacote.angulo || '')}</div>`;
   html += roteiroParaHtmlBloco(pacote.formatoPrincipal, pacote.principal);
   if(pacote.stories){
     html += roteiroParaHtmlBloco('Stories', pacote.stories);
   }
-  baixarComoWord(titulo, titulo, html);
+  baixarComoWord(pacote.dia || 'conteudo-do-dia', pacote.dia || 'Conteúdo do dia', html);
 }
 </script>
 
