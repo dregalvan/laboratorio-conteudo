@@ -363,6 +363,7 @@
 
       <label>Formato</label>
       <div class="chip-row" id="formato-chips">
+        <button type="button" class="chip" data-formato="Feed">Feed</button>
         <button type="button" class="chip active" data-formato="Reels">Reels</button>
         <button type="button" class="chip" data-formato="Stories">Stories</button>
         <button type="button" class="chip" data-formato="LinkedIn">LinkedIn</button>
@@ -414,6 +415,7 @@
         <div class="result-actions">
           <button class="btn-small primary" onclick="salvarNaBiblioteca()">Salvar na biblioteca</button>
           <button class="btn-small" onclick="copiarRoteiro()">Copiar texto</button>
+          <button class="btn-small" onclick="baixarRoteiroAtualWord()">Baixar em Word</button>
         </div>
       </div>
     </div>
@@ -470,6 +472,13 @@
             <option value="7">7</option>
           </select>
         </div>
+      </div>
+
+      <label style="margin-top:14px;">Formato principal do pacote do dia <span style="text-transform:none;font-weight:400;">(os stories entram sempre junto)</span></label>
+      <div class="chip-row" id="pacote-formato-chips">
+        <button type="button" class="chip active" data-formato="Feed">Feed</button>
+        <button type="button" class="chip" data-formato="Reels">Reels</button>
+        <button type="button" class="chip" data-formato="LinkedIn">LinkedIn</button>
       </div>
 
       <button class="gen-btn" style="background:var(--petrol);" id="linha-btn" onclick="gerarLinhaEditorial()">
@@ -566,7 +575,7 @@
         <div class="plan-name mono">Profissional</div>
         <div class="price-tag">R$197<span>/mês</span></div>
         <ul class="feat-list">
-          <li>Todos os formatos: Stories, LinkedIn, Reels</li>
+          <li>Todos os formatos: Feed, Stories, Reels, LinkedIn</li>
           <li>Roteiros ilimitados</li>
           <li>IA adaptativa — aprende com você</li>
           <li>Suporte por e-mail e chat</li>
@@ -644,6 +653,8 @@ let ultimoRoteiro = null;
 let biblioteca = [];
 let perfilMarca = { texto: "" };
 let linhaEditorialAtual = [];
+let formatoPacotePrincipal = "Feed";
+let pacotesDia = {}; // idx do dia -> { principal, stories, formatoPrincipal, dia, angulo }
 
 document.querySelectorAll('#tipo-chips .chip').forEach(chip => {
   chip.addEventListener('click', () => {
@@ -733,6 +744,14 @@ document.querySelectorAll('#formato-chips .chip').forEach(chip => {
   });
 });
 
+document.querySelectorAll('#pacote-formato-chips .chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#pacote-formato-chips .chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    formatoPacotePrincipal = chip.dataset.formato;
+  });
+});
+
 function removerTravessoes(texto){
   if(!texto) return texto;
   return texto
@@ -778,27 +797,9 @@ function parseRoteiroResponse(texto){
   return { hook, storytelling, cta, plano_postagem };
 }
 
-async function gerarRoteiro(){
-  const tema = document.getElementById('tema').value.trim();
-  const nicho = document.getElementById('nicho').value.trim() || "negócio local";
-  const tom = document.getElementById('tom').value;
-  const detalhe = document.getElementById('detalhe').value.trim();
-  const errorBox = document.getElementById('error-box');
-  const btn = document.getElementById('gerar-btn');
-  const label = document.getElementById('gerar-label');
-  const resultWrap = document.getElementById('result-wrap');
-
-  errorBox.style.display = 'none';
-
-  if(!tema){
-    errorBox.textContent = "Digite um tema ou assunto antes de gerar.";
-    errorBox.style.display = 'block';
-    return;
-  }
-
-  btn.disabled = true;
-  label.innerHTML = '<span class="spinner"></span> Gerando roteiro...';
-
+// chamarGeradorRoteiro faz a chamada à IA e devolve o roteiro pronto (sem mexer na tela).
+// É usada tanto pelo botão principal do gerador quanto pelo "pacote do dia" da linha editorial.
+async function chamarGeradorRoteiro({ nicho, tom, formato, tipo, tema, detalhe }){
   const systemPrompt = `Você é uma ghostwriter especializada em Stories e conteúdo de redes sociais extremamente humanizado — do tipo que faz quem assiste sentir "nossa, é exatamente isso que eu vivo, ela me entende", não um copywriter de fórmula de vendas. Você escreve para mentoras/profissionais que constroem comunidade de verdade com a própria audiência (as clientes em potencial), não funil de conversão.
 
 REGRA CENTRAL: o centro emocional do post é sempre a realidade de quem está assistindo, a cliente em potencial, NUNCA a trajetória pessoal da profissional. A profissional pode aparecer como quem observa, testemunha ou reflete sobre isso, mas o post não é sobre a jornada dela.
@@ -823,7 +824,7 @@ Regras obrigatórias:
    - FIM (vira o "cta"): não é ordem de venda nem "comente a palavra X". É um convite genuíno pra continuar a conversa, uma pergunta real, ou um convite pra quem se identificou compartilhar a própria experiência.
 4. Escreva como a pessoa fala de verdade: frases curtas, pausas, reticências quando fizer sentido, imperfeições propositais. Nunca deve parecer texto revisado por um departamento de marketing.
 5. O objetivo do post não é vender, é pertencimento. Quem assiste precisa sentir "ela entende exatamente o que eu passo" e "eu faço parte disso".
-6. Adapte ao formato: Stories = bem íntimo, como falar pra uma amiga, frases curtíssimas, quase um diário em voz alta; Reels = falado e com ritmo, mas ainda pessoal e sem parecer roteiro decorado; LinkedIn = mais estruturado, mas sem perder a voz humana e sem jargão corporativo.
+6. Adapte ao formato: Feed = uma legenda pensada pra ser lida com calma, pode desenvolver a ideia um pouco mais que um Story, mas continua soando como uma pessoa contando algo, nunca como texto institucional ou legenda genérica de Instagram; Stories = bem íntimo, como falar pra uma amiga, frases curtíssimas, quase um diário em voz alta; Reels = falado e com ritmo, mas ainda pessoal e sem parecer roteiro decorado; LinkedIn = mais estruturado, mas sem perder a voz humana e sem jargão corporativo.
 7. Se um "caso ou detalhe real" for fornecido pelo usuário, USE esse caso literalmente, mas só como protagonismo de cliente se o tipo de conteúdo for "Case de cliente"; nos outros tipos, adapte esse detalhe como inspiração pra cena sem virar um relato de terceiros.
 8. Se houver um BRIEFING COMPLETO DA MARCA fornecido, ele é a fonte de verdade principal sobre quem é a profissional, como ela fala, o que ela entrega e transforma, e sobretudo quem é o público dela, priorize essas informações sobre os campos rápidos de nicho/tom, e puxe detalhes específicos dele sempre que possível, em vez de generalizar.
 9. PROIBIDO usar travessão (—) em qualquer lugar do texto, em nenhuma hipótese. Travessão é a marca visual mais óbvia de texto gerado por IA. Para pausas ou conectar ideias, use vírgula, ponto, ponto final curto ou reticências, nunca travessão.
@@ -831,6 +832,7 @@ Regras obrigatórias:
 Além do roteiro, você também entrega um PLANO DE POSTAGEM: um passo a passo prático dizendo exatamente o que ela deve postar, em qual ordem, e se aquele trecho é falado em vídeo ou é texto na tela. O objetivo é pegar a pessoa pela mão, ela não pode ficar em dúvida do que fazer.
 
 Regras do plano de postagem, adaptado ao formato:
+- Se o formato for Feed: retorne 1 único bloco do tipo "Legenda do post", com a legenda inteira pronta pra colar no Instagram (pode ter quebras de parágrafo dentro do texto da instrucao) e a dica indicando que tipo de imagem, foto ou carrossel combina com esse texto.
 - Se o formato for Stories: divida o conteúdo em 4 a 6 blocos, cada bloco é um Story separado. Alterne entre "Vídeo falado" (quando faz sentido ela aparecer falando pra câmera, geralmente bom pro início da história pra prender atenção) e "Texto na tela" (quando é melhor deixar uma frase de impacto, uma pergunta, ou uma citação só de texto). O cta costuma funcionar bem como texto direto ou com figurinha de enquete/pergunta.
 - Se o formato for Reels: divida em no máximo 5 blocos de tempo (ex: "0-3s", "3-8s", "8-15s", "15-25s"), todos do tipo "Vídeo falado" (é um vídeo contínuo), mas use a dica de cada bloco pra indicar quando colocar texto sobreposto na tela reforçando a fala.
 - Se o formato for LinkedIn: retorne 1 ou 2 blocos do tipo "Texto do post", indicando como estruturar o texto (parágrafos curtos, quebras de linha), sem precisar de vídeo.
@@ -839,7 +841,7 @@ Seja direto e objetivo em cada campo de texto, instrucao e dica devem ter no má
 
 Cada bloco do plano_postagem deve ter:
 - numero: a ordem (1, 2, 3...) ou a marcação de tempo no caso de Reels
-- tipo: exatamente um destes textos: "Vídeo falado", "Texto na tela" ou "Texto do post"
+- tipo: exatamente um destes textos: "Legenda do post", "Vídeo falado", "Texto na tela" ou "Texto do post"
 - instrucao: o que ela deve falar ou escrever especificamente nesse bloco (pode ser uma frase extraída do roteiro ou adaptada pra caber naquele pedaço)
 - dica: uma orientação prática rápida de atuação ou produção (ex: "olhe direto pra câmera e fale devagar", "deixe a frase na tela por uns 4 segundos antes de passar", "use a figurinha de enquete aqui")
 
@@ -861,47 +863,75 @@ Não use o caractere # em nenhum outro lugar do texto além dessas marcações. 
     ? `\n\nBRIEFING COMPLETO DA MARCA (fonte de verdade principal — use isso para entender quem é essa pessoa, o que ela entrega, vende e transforma na vida das pessoas):\n${perfilMarca.texto}`
     : "";
 
-  const userPrompt = `Nicho: ${nicho}\nTom de voz: ${tom}\nFormato: ${formatoSelecionado}\nTipo de conteúdo (TIPO_DE_CONTEUDO): ${tipoSelecionado}\nTema ou assunto do dia: ${tema}${detalhe ? `\nDetalhe real disponível: ${detalhe}` : ""}${perfilContext}`;
+  const userPrompt = `Nicho: ${nicho}\nTom de voz: ${tom}\nFormato: ${formato}\nTipo de conteúdo (TIPO_DE_CONTEUDO): ${tipo}\nTema ou assunto do dia: ${tema}${detalhe ? `\nDetalhe real disponível: ${detalhe}` : ""}${perfilContext}`;
+
+  const response = await fetch("/api/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 2048,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userPrompt }]
+    })
+  });
+
+  if(!response.ok){
+    throw new Error("Falha na resposta da API (" + response.status + ")");
+  }
+
+  const data = await response.json();
+
+  if(data.stop_reason === "max_tokens"){
+    throw new Error("A resposta da IA foi cortada por ser longa demais.");
+  }
+
+  const textBlock = (data.content || []).find(b => b.type === "text");
+  if(!textBlock){
+    throw new Error("A IA não retornou texto.");
+  }
+
+  let clean = textBlock.text.trim().replace(/^```[a-z]*/i, "").replace(/```$/, "").trim();
+  const parsed = parseRoteiroResponse(clean);
+
+  parsed.hook = removerTravessoes(parsed.hook);
+  parsed.storytelling = removerTravessoes(parsed.storytelling);
+  parsed.cta = removerTravessoes(parsed.cta);
+  if(Array.isArray(parsed.plano_postagem)){
+    parsed.plano_postagem.forEach(item => {
+      item.instrucao = removerTravessoes(item.instrucao);
+      item.dica = removerTravessoes(item.dica);
+    });
+  }
+
+  return { tema, nicho, tom, formato, tipo, ...parsed };
+}
+
+// gerarRoteiro é chamada pelo botão principal do gerador: lê os campos da tela,
+// chama chamarGeradorRoteiro e atualiza a interface com o resultado.
+async function gerarRoteiro(){
+  const tema = document.getElementById('tema').value.trim();
+  const nicho = document.getElementById('nicho').value.trim() || "negócio local";
+  const tom = document.getElementById('tom').value;
+  const detalhe = document.getElementById('detalhe').value.trim();
+  const errorBox = document.getElementById('error-box');
+  const btn = document.getElementById('gerar-btn');
+  const label = document.getElementById('gerar-label');
+  const resultWrap = document.getElementById('result-wrap');
+
+  errorBox.style.display = 'none';
+
+  if(!tema){
+    errorBox.textContent = "Digite um tema ou assunto antes de gerar.";
+    errorBox.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  label.innerHTML = '<span class="spinner"></span> Gerando roteiro...';
 
   try{
-    const response = await fetch("/api/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 2048,
-        system: systemPrompt,
-        messages: [{ role: "user", content: userPrompt }]
-      })
-    });
-
-    if(!response.ok){
-      throw new Error("Falha na resposta da API (" + response.status + ")");
-    }
-
-    const data = await response.json();
-
-    if(data.stop_reason === "max_tokens"){
-      throw new Error("A resposta da IA foi cortada por ser longa demais.");
-    }
-
-    const textBlock = (data.content || []).find(b => b.type === "text");
-    if(!textBlock){
-      throw new Error("A IA não retornou texto.");
-    }
-
-    let clean = textBlock.text.trim().replace(/^```[a-z]*/i, "").replace(/```$/, "").trim();
-    const parsed = parseRoteiroResponse(clean);
-
-    parsed.hook = removerTravessoes(parsed.hook);
-    parsed.storytelling = removerTravessoes(parsed.storytelling);
-    parsed.cta = removerTravessoes(parsed.cta);
-    if(Array.isArray(parsed.plano_postagem)){
-      parsed.plano_postagem.forEach(item => {
-        item.instrucao = removerTravessoes(item.instrucao);
-        item.dica = removerTravessoes(item.dica);
-      });
-    }
+    const parsed = await chamarGeradorRoteiro({ nicho, tom, formato: formatoSelecionado, tipo: tipoSelecionado, tema, detalhe });
 
     document.getElementById('out-hook').textContent = parsed.hook || "";
     document.getElementById('out-story').textContent = parsed.storytelling || "";
@@ -909,7 +939,7 @@ Não use o caractere # em nenhum outro lugar do texto além dessas marcações. 
 
     renderPlanoPostagem(parsed.plano_postagem);
 
-    ultimoRoteiro = { tema, nicho, tom, formato: formatoSelecionado, ...parsed };
+    ultimoRoteiro = parsed;
 
     resultWrap.classList.add('show');
     resultWrap.scrollIntoView({behavior:'smooth', block:'nearest'});
@@ -1055,8 +1085,18 @@ function renderLinhaEditorial(linha){
     return;
   }
   linhaEditorialAtual = linha;
-  resultado.innerHTML = linha.map((item, idx) => `
-    <div class="plano-item" style="align-items:flex-start;">
+  pacotesDia = {};
+  resultado.innerHTML =
+    `<div style="margin-bottom:16px;">
+      <button class="btn-small primary" onclick="baixarLinhaEditorialWord()">Baixar linha editorial em Word</button>
+    </div>` +
+    linha.map((item, idx) => renderItemLinhaEditorial(item, idx)).join('');
+}
+
+function renderItemLinhaEditorial(item, idx){
+  const pacote = pacotesDia[idx];
+  return `
+    <div class="plano-item" style="align-items:flex-start;" id="linha-item-${idx}">
       <div class="plano-num mono">${idx + 1}</div>
       <div style="flex:1;">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
@@ -1065,10 +1105,71 @@ function renderLinhaEditorial(linha){
         </div>
         <div class="plano-instrucao">${escapeHtml(item.angulo || '')}</div>
         <div class="plano-dica" style="margin-bottom:10px;">"${escapeHtml(item.gancho_curto || '')}"</div>
-        <button class="btn-small primary" onclick="usarDiaNoGerador(${idx})">Usar esse dia no gerador</button>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn-small primary" onclick="usarDiaNoGerador(${idx})">Usar esse dia no gerador</button>
+          <button class="btn-small" id="pacote-btn-${idx}" onclick="gerarPacoteDia(${idx})">${pacote ? 'Gerar pacote de novo' : `Gerar ${escapeHtml(formatoPacotePrincipal)} + Stories desse dia`}</button>
+          ${pacote ? `<button class="btn-small" onclick="baixarPacoteDiaWord(${idx})">Baixar pacote em Word</button>` : ''}
+        </div>
+        ${pacote ? renderPacoteDiaHtml(pacote) : ''}
       </div>
     </div>
-  `).join('');
+  `;
+}
+
+function renderPacoteDiaHtml(pacote){
+  return `
+    <div style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--line-strong);display:grid;gap:12px;">
+      ${renderMiniRoteiroHtml(pacote.formatoPrincipal, pacote.principal)}
+      ${renderMiniRoteiroHtml('Stories', pacote.stories)}
+    </div>
+  `;
+}
+
+function renderMiniRoteiroHtml(rotulo, roteiro){
+  if(!roteiro) return '';
+  return `
+    <div style="background:#fff;border:1px solid var(--line-strong);border-radius:10px;padding:14px 16px;">
+      <div class="plano-badge texto" style="margin-bottom:8px;">${escapeHtml(rotulo)}</div>
+      <div style="font-size:0.85rem;margin-bottom:6px;"><strong>Hook:</strong> ${escapeHtml(roteiro.hook || '')}</div>
+      <div style="font-size:0.85rem;margin-bottom:6px;"><strong>Storytelling:</strong> ${escapeHtml(roteiro.storytelling || '')}</div>
+      <div style="font-size:0.85rem;"><strong>CTA:</strong> ${escapeHtml(roteiro.cta || '')}</div>
+    </div>
+  `;
+}
+
+// Gera, num clique só, o conteúdo principal (Feed/Reels/LinkedIn) + os Stories daquele dia da linha editorial.
+async function gerarPacoteDia(idx){
+  const item = linhaEditorialAtual[idx];
+  if(!item) return;
+
+  const btn = document.getElementById(`pacote-btn-${idx}`);
+  const nicho = document.getElementById('nicho').value.trim() || "negócio local";
+  const tom = document.getElementById('tom').value;
+
+  if(btn){ btn.disabled = true; btn.textContent = "Gerando..."; }
+
+  try{
+    const [principal, stories] = await Promise.all([
+      chamarGeradorRoteiro({ nicho, tom, formato: formatoPacotePrincipal, tipo: item.tipo, tema: item.angulo, detalhe: "" }),
+      chamarGeradorRoteiro({ nicho, tom, formato: "Stories", tipo: item.tipo, tema: item.angulo, detalhe: "" })
+    ]);
+
+    pacotesDia[idx] = {
+      principal, stories,
+      formatoPrincipal: formatoPacotePrincipal,
+      dia: item.dia,
+      angulo: item.angulo
+    };
+
+    const container = document.getElementById(`linha-item-${idx}`);
+    if(container){
+      container.outerHTML = renderItemLinhaEditorial(item, idx);
+    }
+  }catch(err){
+    console.error(err);
+    alert("Não foi possível gerar o pacote desse dia agora. Tente novamente em instantes.");
+    if(btn){ btn.disabled = false; btn.textContent = `Gerar ${formatoPacotePrincipal} + Stories desse dia`; }
+  }
 }
 
 function usarDiaNoGerador(idx){
@@ -1154,6 +1255,98 @@ function escapeHtml(str){
   const div = document.createElement('div');
   div.textContent = str || "";
   return div.innerHTML;
+}
+
+/* ===== Exportação para Word (.doc) ===== */
+// Gera um arquivo .doc (HTML compatível com Word) e dispara o download no navegador.
+// Não precisa de servidor: o próprio Word entende esse formato ao abrir.
+function baixarComoWord(nomeArquivo, tituloDocumento, corpoHtml){
+  const preamble = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+  <head><meta charset='utf-8'><title>${escapeHtml(tituloDocumento)}</title>
+  <style>
+    body{font-family:Calibri, Arial, sans-serif; font-size:11pt; color:#16241F;}
+    h1{font-size:18pt;margin-bottom:4pt;}
+    h2{font-size:14pt;margin-top:18pt;margin-bottom:4pt;color:#1B3A3A;}
+    h3{font-size:12pt;margin-top:12pt;margin-bottom:2pt;}
+    .rotulo{font-weight:bold;}
+    .item{margin-bottom:8pt;}
+    hr{border:none;border-top:1px solid #ccc;margin:16pt 0;}
+  </style>
+  </head><body>`;
+  const closing = `</body></html>`;
+  const sourceHTML = preamble + corpoHtml + closing;
+  const blob = new Blob(['\ufeff', sourceHTML], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nomeArquivo.replace(/[^a-zA-Z0-9\-_]+/g, '_') + '.doc';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// Monta o bloco de HTML de um roteiro (hook, storytelling, cta e plano de postagem) pra usar dentro do Word.
+function roteiroParaHtmlBloco(rotulo, roteiro){
+  if(!roteiro) return '';
+  let html = `<h2>${escapeHtml(rotulo)}</h2>`;
+  html += `<div class="item"><span class="rotulo">Hook: </span>${escapeHtml(roteiro.hook || '')}</div>`;
+  html += `<div class="item"><span class="rotulo">Storytelling: </span>${escapeHtml(roteiro.storytelling || '')}</div>`;
+  html += `<div class="item"><span class="rotulo">CTA: </span>${escapeHtml(roteiro.cta || '')}</div>`;
+  if(Array.isArray(roteiro.plano_postagem) && roteiro.plano_postagem.length){
+    html += `<h3>Plano de postagem</h3>`;
+    roteiro.plano_postagem.forEach(p => {
+      html += `<div class="item">${escapeHtml(String(p.numero ?? ''))}. [${escapeHtml(p.tipo || '')}] ${escapeHtml(p.instrucao || '')}${p.dica ? ' — ' + escapeHtml(p.dica) : ''}</div>`;
+    });
+  }
+  return html;
+}
+
+// Baixa em Word o roteiro que está aberto agora no gerador principal.
+function baixarRoteiroAtualWord(){
+  if(!ultimoRoteiro){
+    alert("Gere um roteiro primeiro.");
+    return;
+  }
+  const titulo = `Roteiro - ${ultimoRoteiro.formato} - ${ultimoRoteiro.tema}`;
+  let html = `<h1>${escapeHtml(titulo)}</h1>`;
+  html += roteiroParaHtmlBloco(ultimoRoteiro.formato, ultimoRoteiro);
+  baixarComoWord(titulo, titulo, html);
+}
+
+// Baixa em Word a linha editorial da semana inteira, incluindo os pacotes do dia já gerados.
+function baixarLinhaEditorialWord(){
+  if(!Array.isArray(linhaEditorialAtual) || linhaEditorialAtual.length === 0){
+    alert("Gere a linha editorial da semana primeiro.");
+    return;
+  }
+  let html = `<h1>Linha editorial da semana</h1>`;
+  linhaEditorialAtual.forEach((item, idx) => {
+    html += `<h2>${escapeHtml(item.dia || '')} — ${escapeHtml(item.tipo || '')}</h2>`;
+    html += `<div class="item"><span class="rotulo">Ângulo: </span>${escapeHtml(item.angulo || '')}</div>`;
+    html += `<div class="item"><span class="rotulo">Gancho: </span>"${escapeHtml(item.gancho_curto || '')}"</div>`;
+    const pacote = pacotesDia[idx];
+    if(pacote){
+      html += roteiroParaHtmlBloco(pacote.formatoPrincipal, pacote.principal);
+      html += roteiroParaHtmlBloco('Stories', pacote.stories);
+    }
+    html += `<hr/>`;
+  });
+  baixarComoWord('linha-editorial-da-semana', 'Linha editorial da semana', html);
+}
+
+// Baixa em Word só o pacote de um dia específico (conteúdo principal + stories).
+function baixarPacoteDiaWord(idx){
+  const pacote = pacotesDia[idx];
+  if(!pacote){
+    alert("Gere o pacote desse dia primeiro.");
+    return;
+  }
+  const titulo = `${pacote.dia} - ${pacote.angulo}`;
+  let html = `<h1>${escapeHtml(titulo)}</h1>`;
+  html += roteiroParaHtmlBloco(pacote.formatoPrincipal, pacote.principal);
+  html += roteiroParaHtmlBloco('Stories', pacote.stories);
+  baixarComoWord(titulo, titulo, html);
 }
 </script>
 
